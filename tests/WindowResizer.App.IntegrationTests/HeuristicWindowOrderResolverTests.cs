@@ -42,6 +42,8 @@ public class HeuristicWindowOrderResolverTests
             processId,
             "Code",
             DateTimeOffset.Parse("2026-03-12T17:00:00Z").AddMinutes(startMinutes),
+            0,
+            0,
             true,
             false,
             false,

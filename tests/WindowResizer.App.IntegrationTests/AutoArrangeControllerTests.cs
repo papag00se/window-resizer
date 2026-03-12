@@ -11,10 +11,12 @@ public class AutoArrangeControllerTests
     {
         using var fired = new ManualResetEventSlim(false);
         var resolver = new HeuristicWindowOrderResolver();
+        var visibilitySynchronizer = new FakeWindowVisibilityOrderSynchronizer();
         var arrangeService = new ManualArrangeService(
             new FakeWindowSource([CreateWindow(100)]),
             new FakeWindowPositioningService(new MonitorWorkArea(0, 0, 1600, 900), fired),
-            resolver);
+            resolver,
+            visibilitySynchronizer);
         using var controller = new AutoArrangeController(
             new FakeWindowEnumerator(CreateWindow(100)),
             arrangeService,
@@ -26,6 +28,7 @@ public class AutoArrangeControllerTests
         controller.HandlePotentialArrangeWindow(100, objectId: 0, childId: 0);
 
         Assert.True(fired.Wait(TimeSpan.FromSeconds(2)));
+        Assert.Empty(visibilitySynchronizer.SynchronizedHandles);
     }
 
     [Fact]
@@ -33,10 +36,12 @@ public class AutoArrangeControllerTests
     {
         using var fired = new ManualResetEventSlim(false);
         var resolver = new HeuristicWindowOrderResolver();
+        var visibilitySynchronizer = new FakeWindowVisibilityOrderSynchronizer();
         var arrangeService = new ManualArrangeService(
             new FakeWindowSource([CreateWindow(100)]),
             new FakeWindowPositioningService(new MonitorWorkArea(0, 0, 1600, 900), fired),
-            resolver);
+            resolver,
+            visibilitySynchronizer);
         using var controller = new AutoArrangeController(
             new FakeWindowEnumerator(CreateWindow(100), CreateWindow(200, processName: "notepad")),
             arrangeService,
@@ -47,6 +52,7 @@ public class AutoArrangeControllerTests
         Assert.False(controller.HandlePotentialArrangeWindow(100, objectId: 1, childId: 0));
         Assert.False(controller.HandlePotentialArrangeWindow(200, objectId: 0, childId: 0));
         Assert.False(fired.Wait(TimeSpan.FromMilliseconds(200)));
+        Assert.Empty(visibilitySynchronizer.SynchronizedHandles);
     }
 
     private static TopLevelWindowInfo CreateWindow(nint handle, string processName = "Code")
@@ -58,6 +64,8 @@ public class AutoArrangeControllerTests
             100 + (int)handle,
             processName,
             DateTimeOffset.Parse("2026-03-12T17:00:00Z").AddMinutes((int)handle),
+            0,
+            0,
             true,
             false,
             false,
@@ -87,6 +95,16 @@ public class AutoArrangeControllerTests
         public void ApplyWindowRect(nint handle, WindowLayoutRect rectangle)
         {
             fired.Set();
+        }
+    }
+
+    private sealed class FakeWindowVisibilityOrderSynchronizer : IWindowVisibilityOrderSynchronizer
+    {
+        public List<nint> SynchronizedHandles { get; } = [];
+
+        public void SynchronizeOrder(IReadOnlyList<TopLevelWindowInfo> windows)
+        {
+            SynchronizedHandles.AddRange(windows.Select(window => window.Handle));
         }
     }
 }

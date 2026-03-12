@@ -49,6 +49,7 @@ Suggested types:
 - `Program`
 - `TrayApplicationContext`
 - `SingleInstanceGuard`
+- `StartupArrangeCoordinator`
 
 ### 2. Settings Layer
 
@@ -94,6 +95,7 @@ Implementation notes:
 - Filter aggressively to top-level windows from `Code.exe` and `Code - Insiders.exe`.
 - Keep a short debounce window, such as 150-300 ms, keyed by HWND.
 - Ignore events from child objects and non-window object IDs.
+- Automatic runs from this path must call the arrange service with taskbar synchronization disabled.
 
 Rejected approach:
 
@@ -130,6 +132,7 @@ Eligibility rules:
 Responsibilities:
 
 - produce a deterministic left-to-right order for eligible VS Code windows that approximates user open order
+- optionally synchronize Explorer's grouped preview order to that same sequence when the trigger explicitly allows it
 
 Design decision:
 
@@ -150,6 +153,28 @@ Implementation rule:
   - process ID
   - window handle
 - Do not fail the arrange run simply because a window predates observation; use the deterministic fallback chain instead.
+
+Taskbar-group synchronization rule:
+
+- Add a visibility-order synchronizer that hides windows in resolved order and shows them again in that same order without activation.
+- Use this synchronizer only for:
+  - startup recovery when the app launches and more than one eligible VS Code window already exists
+  - explicit `Arrange Now`
+- Do not use hide/show synchronization for automatic new-window arrange runs.
+
+Rationale:
+
+- Live validation on this machine showed that Explorer's grouped VS Code preview order followed the hide/show sequence.
+- Restricting the behavior to startup recovery and manual arrange avoids needless flicker during routine auto-arrange events.
+
+Manual arrange ordering override:
+
+- Manual `Arrange Now` should prefer the current on-screen left-to-right order of eligible windows.
+- Use current window bounds from discovery and sort manual runs by:
+  - current left edge
+  - current top edge
+  - heuristic order index as the final tie-breaker
+- Startup recovery and automatic new-window runs should continue using the heuristic order directly.
 
 ### 6. Layout Layer
 
@@ -200,6 +225,7 @@ Rect[i] = (X[i], Y[i], W, H)
 Application:
 
 - Use `SetWindowPos` without changing z-order.
+- When taskbar synchronization is enabled for the trigger, perform hide/show ordering first.
 - Apply final bounds in heuristic window order from left to right.
 - Suppress redraw churn where practical, but do not introduce a second animation system.
 
@@ -249,6 +275,12 @@ Required task settings:
 - run only when user is logged on
 - allow start on demand
 - restart on failure enabled
+
+Startup recovery behavior:
+
+- After loading settings and creating services, enumerate eligible VS Code windows once.
+- If more than one eligible window already exists, run a single startup recovery arrange with taskbar synchronization enabled.
+- If zero or one eligible window exists, skip startup recovery.
 
 Fallback:
 
@@ -322,6 +354,8 @@ This is intentional. The app should not silently substitute a different ordering
 - Open `Settings...`, change `Window width (px)`, save, and verify the next arrange run uses the new width.
 - Open additional VS Code windows and verify auto-arrange.
 - Open VS Code windows in a known sequence and verify the next arrange run matches that observed-open sequence.
+- Launch the app while multiple VS Code windows already exist and verify the startup recovery pass also aligns the grouped preview order.
+- Click `Arrange Now` and verify the grouped preview order follows the resolved left-to-right sequence.
 - Restart Explorer and verify the tray icon returns and arrange still works.
 
 ## Delivery Sequence

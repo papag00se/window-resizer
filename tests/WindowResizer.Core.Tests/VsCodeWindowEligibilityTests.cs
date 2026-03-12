@@ -53,6 +53,8 @@ public class VsCodeWindowEligibilityTests
             ProcessId: 42,
             ProcessName: processName,
             ProcessStartTimeUtc: DateTimeOffset.Parse("2026-03-12T17:00:00Z"),
+            CurrentLeft: 0,
+            CurrentTop: 0,
             IsVisible: isVisible,
             IsMinimized: isMinimized,
             IsCloaked: isCloaked,

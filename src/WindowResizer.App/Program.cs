@@ -19,23 +19,39 @@ static class Program
             settingsStore,
             new ScheduledTaskStartupRegistrationService());
         var windowEnumerator = new TopLevelWindowEnumerator();
+        var windowSource = new EligibleVsCodeWindowSource();
         var arrangeService = new ManualArrangeService(
-            new EligibleVsCodeWindowSource(),
+            windowSource,
             new Win32WindowPositioningService(),
-            windowOrderResolver);
+            windowOrderResolver,
+            new Win32WindowVisibilityOrderSynchronizer());
         using var autoArrangeController = new AutoArrangeController(
             windowEnumerator,
             arrangeService,
             windowOrderResolver,
             () => settings.WindowWidthPx);
         autoArrangeController.Start();
+        Exception? startupArrangeException = null;
+
+        try
+        {
+            _ = new StartupArrangeCoordinator(windowSource, arrangeService)
+                .ArrangeExistingWindowsIfNeeded(settings.WindowWidthPx);
+        }
+        catch (Exception ex)
+        {
+            startupArrangeException = ex;
+        }
 
         TrayApplicationContext? context = null;
 
         context = new TrayApplicationContext(new TrayApplicationContextOptions
         {
             RunAtSignIn = settings.RunAtSignIn,
-            ArrangeNowRequested = () => arrangeService.ArrangeNow(settings.WindowWidthPx),
+            ArrangeNowRequested = () => arrangeService.ArrangeNow(
+                settings.WindowWidthPx,
+                synchronizeTaskbarOrder: true,
+                preferCurrentScreenOrder: true),
             SettingsRequested = () =>
             {
                 using var settingsForm = new SettingsForm(settings);
@@ -59,6 +75,13 @@ static class Program
                     enabled ? "Window Resizer will run at sign-in." : "Window Resizer will no longer run at sign-in.");
             }
         });
+
+        if (startupArrangeException is not null)
+        {
+            context.ShowNotification(
+                "Startup arrange failed",
+                startupArrangeException.Message);
+        }
 
         Application.Run(context);
     }    

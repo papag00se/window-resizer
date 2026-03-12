@@ -7,6 +7,8 @@ public sealed record TopLevelWindowInfo(
     int ProcessId,
     string ProcessName,
     DateTimeOffset? ProcessStartTimeUtc,
+    int CurrentLeft,
+    int CurrentTop,
     bool IsVisible,
     bool IsMinimized,
     bool IsCloaked,

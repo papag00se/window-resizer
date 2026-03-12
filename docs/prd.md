@@ -18,6 +18,7 @@ When multiple VS Code windows are open, keeping them aligned to a consistent wid
 - Seed the layout width to `1823` physical pixels, taken from the active VS Code window on 2026-03-12, and allow it to be changed in Settings.
 - Resize each eligible VS Code window to the full working-area height of the target monitor.
 - Place windows from left to right using a heuristic that approximates open order from observed window events, with stable fallbacks for pre-existing windows.
+- Use hide/show sequencing to push Explorer's grouped VS Code preview order toward that same sequence, but only during startup recovery with multiple pre-existing windows and on `Arrange Now`.
 - Evenly distribute the left edges across the target monitor while keeping each window width fixed.
 - Avoid elevation, admin-only setup, network access, and external services.
 
@@ -72,10 +73,13 @@ When multiple VS Code windows are open, keeping them aligned to a consistent wid
 - The app must watch for new VS Code top-level windows becoming visible.
 - After a qualifying window appears, the app must debounce briefly and then apply the layout once the window frame is stable.
 - Repeated shell events for the same window must coalesce into a single layout run.
+- Automatic new-window runs must not hide/show windows to re-sequence the taskbar preview group.
 
 ### FR-4 Manual Trigger
 
 - Clicking the tray icon must allow the user to apply the layout immediately even if no new window opened.
+- `Arrange Now` must prefer the current left-to-right screen order of eligible VS Code windows, using the current window left edge as the primary sort key so the user can manually reorder windows before invoking it.
+- `Arrange Now` must hide and re-show eligible VS Code windows in the resolved arrange order before applying the final bounds.
 - The tray menu must include:
   - `Arrange Now`
   - `Settings...`
@@ -104,6 +108,8 @@ When multiple VS Code windows are open, keeping them aligned to a consistent wid
   - process ID
   - window handle
 - The ordering heuristic must be deterministic for a given set of observed windows.
+- If the app starts and more than one eligible VS Code window already exists, it must run a single startup recovery arrange that also hide/show-syncs the Explorer preview order.
+- If the app starts and zero or one eligible VS Code window exists, it must skip startup recovery reordering.
 
 ### FR-8 Placement
 
@@ -152,9 +158,12 @@ When multiple VS Code windows are open, keeping them aligned to a consistent wid
 
 - With the app running, opening a new VS Code window causes all eligible VS Code windows to be rearranged on the trigger monitor using the saved width or the clamped working-area width if smaller, and full working-area height.
 - Clicking `Arrange Now` from the tray performs the same layout even if no new window has opened.
+- Clicking `Arrange Now` also drives the grouped VS Code taskbar preview order toward the same left-to-right order.
+- If the user manually reorders VS Code windows on screen and then clicks `Arrange Now`, the resulting arrange order follows those current left edges.
 - Changing `Window width (px)` in `Settings...` and clicking `Save` persists the new width and future arrange runs use it.
 - When the app has observed VS Code windows opening during the current session, the left-to-right order on screen matches that observed-open sequence.
 - Windows that predate the app session are placed deterministically using process start time, then PID, then window handle.
+- If the app launches while multiple VS Code windows already exist, it performs one startup recovery arrange that also hide/show-syncs the grouped preview order.
 - After signing out and signing back in, the app starts automatically and the tray icon is present.
 
 ## Security and Privacy

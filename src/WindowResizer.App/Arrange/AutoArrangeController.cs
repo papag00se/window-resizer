@@ -33,7 +33,7 @@ public sealed class AutoArrangeController : IDisposable
         _widthProvider = widthProvider;
         _scheduler = new DebouncedActionScheduler(
             debounceDelay ?? TimeSpan.FromMilliseconds(250),
-            () => _manualArrangeService.ArrangeNow(_widthProvider()));
+            () => _manualArrangeService.ArrangeNow(_widthProvider(), synchronizeTaskbarOrder: false));
         _eventCallback = HandleWinEvent;
     }
 

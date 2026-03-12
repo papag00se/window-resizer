@@ -36,6 +36,9 @@ internal static class NativeMethods
     [DllImport("user32.dll", SetLastError = true)]
     internal static extern uint GetWindowThreadProcessId(IntPtr hWnd, out uint lpdwProcessId);
 
+    [DllImport("user32.dll", SetLastError = true)]
+    internal static extern bool GetWindowRect(IntPtr hWnd, out Rect lpRect);
+
     [DllImport("dwmapi.dll")]
     internal static extern int DwmGetWindowAttribute(
         IntPtr hwnd,
@@ -54,5 +57,14 @@ internal static class NativeMethods
         return IntPtr.Size == 8
             ? GetWindowLongPtr64(hWnd, GwlExStyle).ToInt64()
             : GetWindowLong32(hWnd, GwlExStyle);
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    internal struct Rect
+    {
+        internal int Left;
+        internal int Top;
+        internal int Right;
+        internal int Bottom;
     }
 }

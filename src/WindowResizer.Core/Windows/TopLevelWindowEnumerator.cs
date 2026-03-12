@@ -50,6 +50,8 @@ public class TopLevelWindowEnumerator
             ProcessId: processInfo.Value.ProcessId,
             ProcessName: processInfo.Value.ProcessName,
             ProcessStartTimeUtc: processInfo.Value.ProcessStartTimeUtc,
+            CurrentLeft: GetWindowRect(hWnd).Left,
+            CurrentTop: GetWindowRect(hWnd).Top,
             IsVisible: NativeMethods.IsWindowVisible(hWnd),
             IsMinimized: NativeMethods.IsIconic(hWnd),
             IsCloaked: IsCloaked(hWnd),
@@ -115,5 +117,15 @@ public class TopLevelWindowEnumerator
             sizeof(int));
 
         return result == 0 && cloaked != 0;
+    }
+
+    private static NativeMethods.Rect GetWindowRect(IntPtr hWnd)
+    {
+        if (!NativeMethods.GetWindowRect(hWnd, out var rect))
+        {
+            throw new InvalidOperationException($"Could not read bounds for window handle {hWnd}.");
+        }
+
+        return rect;
     }
 }
