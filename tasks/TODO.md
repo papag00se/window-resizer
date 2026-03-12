@@ -24,7 +24,7 @@ Last updated: 2026-03-12
   - Depends on: none
   - Deliverables: solution file, app project, unit test project, e2e/integration test project, baseline build/test wiring
 
-- [ ] `T002` Implement configuration and settings persistence for `windowWidthPx` and `runAtSignIn`.
+- [x] `T002` Implement configuration and settings persistence for `windowWidthPx` and `runAtSignIn`.
   - Phase: `P1`
   - Depends on: `T001`
   - Deliverables: settings model, atomic save/load, validation rules, tests

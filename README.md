@@ -20,3 +20,10 @@ Windows tray application for arranging Visual Studio Code windows to a consisten
 dotnet build WindowResizer.sln
 dotnet test WindowResizer.sln
 ```
+
+## Settings
+
+- User settings are stored at `%AppData%\WindowResizer\settings.json`
+- Current persisted values:
+  - `windowWidthPx`
+  - `runAtSignIn`

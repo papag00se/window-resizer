@@ -1,13 +1,13 @@
 # TASK STATE
 
-Last updated UTC: 2026-03-12T17:06:36Z
+Last updated UTC: 2026-03-12T17:09:40Z
 
 ## Overview
 
-- `overall_status`: `ready`
+- `overall_status`: `in_progress`
 - `current_task_id`: `none`
-- `next_task_id`: `T002`
-- `completed_tasks`: `1`
+- `next_task_id`: `T003`
+- `completed_tasks`: `2`
 - `blocked_tasks`: `0`
 - `total_tasks`: `13`
 - `active_phases`: `P1`, `P2`, `P3`, `P4`, `P5`, `P6`
@@ -17,8 +17,8 @@ Last updated UTC: 2026-03-12T17:06:36Z
 
 | Task ID | Title | Status | Depends On | Started UTC | Finished UTC | Commit | Notes |
 |---|---|---|---|---|---|---|---|
-| `T001` | Bootstrap the .NET Windows tray application solution and test projects | `done` | none | 2026-03-12T17:02:07Z | 2026-03-12T17:06:36Z | pending-commit-hash | Bootstrapped the solution, installed the .NET 8 SDK, added baseline tests, and verified `dotnet build` plus `dotnet test WindowResizer.sln`. |
-| `T002` | Implement configuration and settings persistence for `windowWidthPx` and `runAtSignIn` | `pending` | `T001` |  |  |  | Persist settings atomically and validate inputs. |
+| `T001` | Bootstrap the .NET Windows tray application solution and test projects | `done` | none | 2026-03-12T17:02:07Z | 2026-03-12T17:06:36Z | `1b33c5b85ffd9d0ca1ba1dc4d8fcfcb3ad30b01a` | Bootstrapped the solution, installed the .NET 8 SDK, added baseline tests, and verified `dotnet build` plus `dotnet test WindowResizer.sln`. |
+| `T002` | Implement configuration and settings persistence for `windowWidthPx` and `runAtSignIn` | `done` | `T001` | 2026-03-12T17:07:19Z | 2026-03-12T17:09:40Z | pending-commit-hash | Added settings model, validator, default pathing, atomic save/load, README notes, and real filesystem tests. |
 | `T003` | Implement the pure layout engine for monitor working-area placement and width clamping | `pending` | `T001` |  |  |  | Keep this layer pure and easy to unit test. |
 | `T004` | Implement VS Code window discovery and eligibility filtering | `pending` | `T001` |  |  |  | Enumerate top-level VS Code windows and exclude hidden helper surfaces. |
 | `T005` | Implement the tray application shell with `Arrange Now`, `Settings...`, `Run at Sign-in`, and `Exit` | `pending` | `T002` |  |  |  | Build the background UX shell without a main window. |
@@ -35,3 +35,4 @@ Last updated UTC: 2026-03-12T17:06:36Z
 
 - 2026-03-12T17:58:00Z: Initialized unattended task queue and task state from current product docs. No implementation work has started.
 - 2026-03-12T17:02:07Z: Started T001. Verified the workspace is not a git repository and the machine has .NET runtimes but no .NET SDK installed.
+- 2026-03-12T17:07:19Z: Completed T001 in commit `1b33c5b85ffd9d0ca1ba1dc4d8fcfcb3ad30b01a` and started T002.
