@@ -59,15 +59,15 @@ Last updated: 2026-03-12
   - Depends on: `T004`, `T007`
   - Deliverables: WinEvent hook integration, stable event filtering, tests
 
-- [ ] `T009` Implement taskbar-order resolution for VS Code windows and fail-closed behavior when order is incomplete.
+- [x] `T009` Implement heuristic VS Code window ordering from observed open events with PID-backed fallback.
   - Phase: `P4`
   - Depends on: `T004`
-  - Deliverables: order resolver, shell/UIA mapping, unit/integration tests
+  - Deliverables: observed-open order resolver, deterministic fallback chain, unit/integration tests
 
-- [ ] `T010` Integrate taskbar ordering into arrange execution for both manual and automatic runs.
+- [ ] `T010` Integrate heuristic ordering into arrange execution for both manual and automatic runs.
   - Phase: `P4`
   - Depends on: `T007`, `T008`, `T009`
-  - Deliverables: ordered arrange flow, notifications on order failure, regression tests
+  - Deliverables: ordered arrange flow for manual and automatic runs, regression tests
 
 - [x] `T011` Implement startup registration and durability behavior for per-user sign-in launch and restart-on-failure.
   - Phase: `P5`

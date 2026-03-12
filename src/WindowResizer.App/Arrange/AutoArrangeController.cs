@@ -14,6 +14,7 @@ public sealed class AutoArrangeController : IDisposable
     private readonly TopLevelWindowEnumerator _windowEnumerator;
     private readonly Func<int> _widthProvider;
     private readonly ManualArrangeService _manualArrangeService;
+    private readonly HeuristicWindowOrderResolver _windowOrderResolver;
     private readonly DebouncedActionScheduler _scheduler;
     private readonly WinEventDelegate _eventCallback;
     private nint _showHook;
@@ -22,11 +23,13 @@ public sealed class AutoArrangeController : IDisposable
     public AutoArrangeController(
         TopLevelWindowEnumerator windowEnumerator,
         ManualArrangeService manualArrangeService,
+        HeuristicWindowOrderResolver windowOrderResolver,
         Func<int> widthProvider,
         TimeSpan? debounceDelay = null)
     {
         _windowEnumerator = windowEnumerator;
         _manualArrangeService = manualArrangeService;
+        _windowOrderResolver = windowOrderResolver;
         _widthProvider = widthProvider;
         _scheduler = new DebouncedActionScheduler(
             debounceDelay ?? TimeSpan.FromMilliseconds(250),
@@ -68,6 +71,7 @@ public sealed class AutoArrangeController : IDisposable
             return false;
         }
 
+        _windowOrderResolver.ObserveWindow(window);
         _scheduler.Request();
         return true;
     }

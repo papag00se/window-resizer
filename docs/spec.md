@@ -129,21 +129,27 @@ Eligibility rules:
 
 Responsibilities:
 
-- produce the exact left-to-right order for eligible VS Code windows based on the current taskbar order
+- produce a deterministic left-to-right order for eligible VS Code windows that approximates user open order
 
 Design decision:
 
-- Use shell UI inspection through Windows UI Automation against the taskbar surface to recover the order visible to the user.
+- Use the app's own observed VS Code window-open events as the primary ordering source.
 
 Why:
 
-- Official taskbar documentation confirms that windows are grouped by AppUserModelID, each grouped member is represented as a separate thumbnail switch target, and taskbar buttons can be rearranged by the user.
-- Official taskbar APIs such as `ITaskbarList3::SetTabOrder` are for an app to control its own taskbar tab order, not for an external utility to query the order of another app's windows.
-- Therefore, V1 should treat taskbar order as shell UI state that must be read from the shell surface rather than inferred from z-order or creation time.
+- Win32 does not expose a supported historical creation timestamp for `HWND`s.
+- The app already receives VS Code window-open events through `SetWinEventHook`, which provides a direct session-local signal for first-seen order.
+- For windows that already existed before the app saw them, process metadata is available and deterministic.
 
 Implementation rule:
 
-- If the ordering layer cannot map every eligible VS Code HWND to a taskbar-visible entry, abort the run and notify the user.
+- Maintain a session-local first-seen sequence keyed by `HWND`.
+- On arrange, sort eligible windows in this order:
+  - observed first-seen sequence
+  - process start time
+  - process ID
+  - window handle
+- Do not fail the arrange run simply because a window predates observation; use the deterministic fallback chain instead.
 
 ### 6. Layout Layer
 
@@ -194,7 +200,7 @@ Rect[i] = (X[i], Y[i], W, H)
 Application:
 
 - Use `SetWindowPos` without changing z-order.
-- Apply final bounds in taskbar order from left to right.
+- Apply final bounds in heuristic window order from left to right.
 - Suppress redraw churn where practical, but do not introduce a second animation system.
 
 ### 7. Tray UX Layer
@@ -256,7 +262,7 @@ Each arrange run should log:
 - trigger HWND
 - target monitor
 - discovered eligible HWNDs
-- resolved taskbar order
+- resolved heuristic order
 - effective width and height
 - applied rectangles
 - failure reason if aborted
@@ -272,7 +278,6 @@ Fail closed when the app cannot trust its inputs:
 
 - No eligible windows: no-op and log.
 - Invalid `windowWidthPx` in persisted settings: show an error, do not arrange, and require correction through Settings or the settings file.
-- Incomplete taskbar order mapping: abort and notify.
 - Invalid monitor info: abort and notify.
 - Explorer restart: rebuild tray icon and continue listening.
 
@@ -316,7 +321,7 @@ This is intentional. The app should not silently substitute a different ordering
 - Start app at sign-in and verify tray icon presence.
 - Open `Settings...`, change `Window width (px)`, save, and verify the next arrange run uses the new width.
 - Open additional VS Code windows and verify auto-arrange.
-- Reorder windows in the taskbar group and verify the next arrange run matches the new order.
+- Open VS Code windows in a known sequence and verify the next arrange run matches that observed-open sequence.
 - Restart Explorer and verify the tray icon returns and arrange still works.
 
 ## Delivery Sequence
@@ -326,6 +331,6 @@ This is intentional. The app should not silently substitute a different ordering
 3. Add the Settings dialog and persist `windowWidthPx`, seeded to `1823`.
 4. Implement width clamp behavior.
 5. Implement automatic arrange trigger with debounce.
-6. Implement taskbar-order resolver.
+6. Implement heuristic ordering from observed open events with deterministic fallback.
 7. Add startup registration and restart-on-failure support.
 8. Add tests for layout, eligibility, and settings persistence.

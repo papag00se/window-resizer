@@ -10,12 +10,15 @@ public class AutoArrangeControllerTests
     public void HandlePotentialArrangeWindowDebouncesRepeatedEligibleEvents()
     {
         using var fired = new ManualResetEventSlim(false);
+        var resolver = new HeuristicWindowOrderResolver();
         var arrangeService = new ManualArrangeService(
             new FakeWindowSource([CreateWindow(100)]),
-            new FakeWindowPositioningService(new MonitorWorkArea(0, 0, 1600, 900), fired));
+            new FakeWindowPositioningService(new MonitorWorkArea(0, 0, 1600, 900), fired),
+            resolver);
         using var controller = new AutoArrangeController(
             new FakeWindowEnumerator(CreateWindow(100)),
             arrangeService,
+            resolver,
             () => 1000,
             debounceDelay: TimeSpan.FromMilliseconds(75));
 
@@ -29,12 +32,15 @@ public class AutoArrangeControllerTests
     public void HandlePotentialArrangeWindowIgnoresNonWindowEventsAndIneligibleProcesses()
     {
         using var fired = new ManualResetEventSlim(false);
+        var resolver = new HeuristicWindowOrderResolver();
         var arrangeService = new ManualArrangeService(
             new FakeWindowSource([CreateWindow(100)]),
-            new FakeWindowPositioningService(new MonitorWorkArea(0, 0, 1600, 900), fired));
+            new FakeWindowPositioningService(new MonitorWorkArea(0, 0, 1600, 900), fired),
+            resolver);
         using var controller = new AutoArrangeController(
             new FakeWindowEnumerator(CreateWindow(100), CreateWindow(200, processName: "notepad")),
             arrangeService,
+            resolver,
             () => 1000,
             debounceDelay: TimeSpan.FromMilliseconds(50));
 
@@ -45,7 +51,18 @@ public class AutoArrangeControllerTests
 
     private static TopLevelWindowInfo CreateWindow(nint handle, string processName = "Code")
     {
-        return new TopLevelWindowInfo(handle, "VS Code", "Chrome_WidgetWin_1", processName, true, false, false, false, false);
+        return new TopLevelWindowInfo(
+            handle,
+            "VS Code",
+            "Chrome_WidgetWin_1",
+            100 + (int)handle,
+            processName,
+            DateTimeOffset.Parse("2026-03-12T17:00:00Z").AddMinutes((int)handle),
+            true,
+            false,
+            false,
+            false,
+            false);
     }
 
     private sealed class FakeWindowEnumerator(params TopLevelWindowInfo[] windows) : TopLevelWindowEnumerator

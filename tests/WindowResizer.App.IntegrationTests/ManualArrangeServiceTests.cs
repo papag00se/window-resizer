@@ -15,7 +15,10 @@ public class ManualArrangeServiceTests
                 CreateWindow(202)
             ]);
         var positioningService = new FakeWindowPositioningService(new MonitorWorkArea(0, 0, 2000, 1000));
-        var arrangeService = new ManualArrangeService(windowSource, positioningService);
+        var arrangeService = new ManualArrangeService(
+            windowSource,
+            positioningService,
+            new HeuristicWindowOrderResolver());
 
         var result = arrangeService.ArrangeNow(requestedWidthPx: 900);
 
@@ -35,7 +38,8 @@ public class ManualArrangeServiceTests
         var positioningService = new FakeWindowPositioningService(new MonitorWorkArea(0, 0, 1600, 900));
         var arrangeService = new ManualArrangeService(
             new FakeWindowSource([]),
-            positioningService);
+            positioningService,
+            new HeuristicWindowOrderResolver());
 
         var result = arrangeService.ArrangeNow(requestedWidthPx: 1000);
 
@@ -46,7 +50,18 @@ public class ManualArrangeServiceTests
 
     private static TopLevelWindowInfo CreateWindow(nint handle)
     {
-        return new TopLevelWindowInfo(handle, "VS Code", "Chrome_WidgetWin_1", "Code", true, false, false, false, false);
+        return new TopLevelWindowInfo(
+            handle,
+            "VS Code",
+            "Chrome_WidgetWin_1",
+            100 + (int)handle,
+            "Code",
+            DateTimeOffset.Parse("2026-03-12T17:00:00Z").AddMinutes((int)handle),
+            true,
+            false,
+            false,
+            false,
+            false);
     }
 
     private sealed class FakeWindowSource(IReadOnlyList<TopLevelWindowInfo> windows) : IEligibleWindowSource

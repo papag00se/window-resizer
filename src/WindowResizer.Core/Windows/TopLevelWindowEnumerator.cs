@@ -37,8 +37,8 @@ public class TopLevelWindowEnumerator
 
     private static TopLevelWindowInfo? TryCreateWindowInfo(IntPtr hWnd)
     {
-        var processName = TryGetProcessName(hWnd);
-        if (processName is null)
+        var processInfo = TryGetProcessInfo(hWnd);
+        if (processInfo is null)
         {
             return null;
         }
@@ -47,7 +47,9 @@ public class TopLevelWindowEnumerator
             Handle: hWnd,
             Title: GetWindowText(hWnd),
             ClassName: GetClassName(hWnd),
-            ProcessName: processName,
+            ProcessId: processInfo.Value.ProcessId,
+            ProcessName: processInfo.Value.ProcessName,
+            ProcessStartTimeUtc: processInfo.Value.ProcessStartTimeUtc,
             IsVisible: NativeMethods.IsWindowVisible(hWnd),
             IsMinimized: NativeMethods.IsIconic(hWnd),
             IsCloaked: IsCloaked(hWnd),
@@ -55,7 +57,7 @@ public class TopLevelWindowEnumerator
             IsToolWindow: (NativeMethods.GetWindowExStyle(hWnd) & NativeMethods.WsExToolWindow) != 0);
     }
 
-    private static string? TryGetProcessName(IntPtr hWnd)
+    private static (int ProcessId, string ProcessName, DateTimeOffset? ProcessStartTimeUtc)? TryGetProcessInfo(IntPtr hWnd)
     {
         NativeMethods.GetWindowThreadProcessId(hWnd, out var processId);
         if (processId == 0)
@@ -66,7 +68,22 @@ public class TopLevelWindowEnumerator
         try
         {
             using var process = Process.GetProcessById((int)processId);
-            return process.ProcessName;
+            DateTimeOffset? processStartTimeUtc = null;
+
+            try
+            {
+                processStartTimeUtc = new DateTimeOffset(process.StartTime.ToUniversalTime());
+            }
+            catch (InvalidOperationException)
+            {
+                processStartTimeUtc = null;
+            }
+            catch (System.ComponentModel.Win32Exception)
+            {
+                processStartTimeUtc = null;
+            }
+
+            return ((int)processId, process.ProcessName, processStartTimeUtc);
         }
         catch (ArgumentException)
         {

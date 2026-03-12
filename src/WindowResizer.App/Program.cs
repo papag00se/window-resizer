@@ -14,16 +14,19 @@ static class Program
 
         var settingsStore = new AppSettingsStore();
         var settings = settingsStore.Load();
+        var windowOrderResolver = new HeuristicWindowOrderResolver();
         var runAtSignInService = new RunAtSignInService(
             settingsStore,
             new ScheduledTaskStartupRegistrationService());
         var windowEnumerator = new TopLevelWindowEnumerator();
         var arrangeService = new ManualArrangeService(
             new EligibleVsCodeWindowSource(),
-            new Win32WindowPositioningService());
+            new Win32WindowPositioningService(),
+            windowOrderResolver);
         using var autoArrangeController = new AutoArrangeController(
             windowEnumerator,
             arrangeService,
+            windowOrderResolver,
             () => settings.WindowWidthPx);
         autoArrangeController.Start();
 
