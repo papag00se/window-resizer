@@ -29,7 +29,7 @@ Last updated: 2026-03-12
   - Depends on: `T001`
   - Deliverables: settings model, atomic save/load, validation rules, tests
 
-- [ ] `T003` Implement the pure layout engine for monitor working-area placement and width clamping.
+- [x] `T003` Implement the pure layout engine for monitor working-area placement and width clamping.
   - Phase: `P2`
   - Depends on: `T001`
   - Deliverables: rectangle calculation logic, unit tests for happy path and edge cases

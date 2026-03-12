@@ -1,13 +1,13 @@
 # TASK STATE
 
-Last updated UTC: 2026-03-12T17:09:40Z
+Last updated UTC: 2026-03-12T17:11:56Z
 
 ## Overview
 
 - `overall_status`: `in_progress`
 - `current_task_id`: `none`
-- `next_task_id`: `T003`
-- `completed_tasks`: `2`
+- `next_task_id`: `T004`
+- `completed_tasks`: `3`
 - `blocked_tasks`: `0`
 - `total_tasks`: `13`
 - `active_phases`: `P1`, `P2`, `P3`, `P4`, `P5`, `P6`
@@ -18,8 +18,8 @@ Last updated UTC: 2026-03-12T17:09:40Z
 | Task ID | Title | Status | Depends On | Started UTC | Finished UTC | Commit | Notes |
 |---|---|---|---|---|---|---|---|
 | `T001` | Bootstrap the .NET Windows tray application solution and test projects | `done` | none | 2026-03-12T17:02:07Z | 2026-03-12T17:06:36Z | `1b33c5b85ffd9d0ca1ba1dc4d8fcfcb3ad30b01a` | Bootstrapped the solution, installed the .NET 8 SDK, added baseline tests, and verified `dotnet build` plus `dotnet test WindowResizer.sln`. |
-| `T002` | Implement configuration and settings persistence for `windowWidthPx` and `runAtSignIn` | `done` | `T001` | 2026-03-12T17:07:19Z | 2026-03-12T17:09:40Z | pending-commit-hash | Added settings model, validator, default pathing, atomic save/load, README notes, and real filesystem tests. |
-| `T003` | Implement the pure layout engine for monitor working-area placement and width clamping | `pending` | `T001` |  |  |  | Keep this layer pure and easy to unit test. |
+| `T002` | Implement configuration and settings persistence for `windowWidthPx` and `runAtSignIn` | `done` | `T001` | 2026-03-12T17:07:19Z | 2026-03-12T17:09:40Z | `6925308f79a3e5e15ef4092bb4a70455feee1cb1` | Added settings model, validator, default pathing, atomic save/load, README notes, and real filesystem tests. |
+| `T003` | Implement the pure layout engine for monitor working-area placement and width clamping | `done` | `T001` | 2026-03-12T17:10:11Z | 2026-03-12T17:11:56Z | pending-commit-hash | Added a pure layout engine, overlap-preserving spacing, width clamping, and unit plus integration coverage for placement rules. |
 | `T004` | Implement VS Code window discovery and eligibility filtering | `pending` | `T001` |  |  |  | Enumerate top-level VS Code windows and exclude hidden helper surfaces. |
 | `T005` | Implement the tray application shell with `Arrange Now`, `Settings...`, `Run at Sign-in`, and `Exit` | `pending` | `T002` |  |  |  | Build the background UX shell without a main window. |
 | `T006` | Implement the Settings dialog for editing `windowWidthPx` | `pending` | `T002`, `T005` |  |  |  | Minimal modal settings UX only. |
@@ -36,3 +36,4 @@ Last updated UTC: 2026-03-12T17:09:40Z
 - 2026-03-12T17:58:00Z: Initialized unattended task queue and task state from current product docs. No implementation work has started.
 - 2026-03-12T17:02:07Z: Started T001. Verified the workspace is not a git repository and the machine has .NET runtimes but no .NET SDK installed.
 - 2026-03-12T17:07:19Z: Completed T001 in commit `1b33c5b85ffd9d0ca1ba1dc4d8fcfcb3ad30b01a` and started T002.
+- 2026-03-12T17:10:11Z: Completed T002 in commit `6925308f79a3e5e15ef4092bb4a70455feee1cb1` and started T003.
