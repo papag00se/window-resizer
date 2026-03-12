@@ -44,7 +44,7 @@ Last updated: 2026-03-12
   - Depends on: `T002`
   - Deliverables: hidden app context, tray icon, menu wiring, basic notifications, tests where feasible
 
-- [ ] `T006` Implement the Settings dialog for editing `windowWidthPx`.
+- [x] `T006` Implement the Settings dialog for editing `windowWidthPx`.
   - Phase: `P3`
   - Depends on: `T002`, `T005`
   - Deliverables: modal settings form, validation, persistence integration, tests

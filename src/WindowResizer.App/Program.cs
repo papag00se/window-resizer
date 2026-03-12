@@ -1,5 +1,6 @@
 using WindowResizer.App.Tray;
 using WindowResizer.Core.Settings;
+using WindowResizer.App.Settings;
 
 static class Program
 {
@@ -11,11 +12,24 @@ static class Program
         var settingsStore = new AppSettingsStore();
         var settings = settingsStore.Load();
 
-        var context = new TrayApplicationContext(new TrayApplicationContextOptions
+        TrayApplicationContext? context = null;
+
+        context = new TrayApplicationContext(new TrayApplicationContextOptions
         {
             RunAtSignIn = settings.RunAtSignIn,
             ArrangeNowRequested = () => { },
-            SettingsRequested = () => { }
+            SettingsRequested = () =>
+            {
+                using var settingsForm = new SettingsForm(settings);
+                if (settingsForm.ShowDialog() != DialogResult.OK)
+                {
+                    return;
+                }
+
+                settings = settingsForm.SavedSettings;
+                settingsStore.Save(settings);
+                context!.ShowNotification("Settings saved", "Window width updated.");
+            }
         });
 
         Application.Run(context);

@@ -1,13 +1,13 @@
 # TASK STATE
 
-Last updated UTC: 2026-03-12T17:17:19Z
+Last updated UTC: 2026-03-12T17:20:07Z
 
 ## Overview
 
 - `overall_status`: `in_progress`
-- `current_task_id`: `none`
-- `next_task_id`: `T006`
-- `completed_tasks`: `5`
+- `current_task_id`: `T007`
+- `next_task_id`: `T007`
+- `completed_tasks`: `6`
 - `blocked_tasks`: `0`
 - `total_tasks`: `13`
 - `active_phases`: `P1`, `P2`, `P3`, `P4`, `P5`, `P6`
@@ -21,9 +21,9 @@ Last updated UTC: 2026-03-12T17:17:19Z
 | `T002` | Implement configuration and settings persistence for `windowWidthPx` and `runAtSignIn` | `done` | `T001` | 2026-03-12T17:07:19Z | 2026-03-12T17:09:40Z | `6925308f79a3e5e15ef4092bb4a70455feee1cb1` | Added settings model, validator, default pathing, atomic save/load, README notes, and real filesystem tests. |
 | `T003` | Implement the pure layout engine for monitor working-area placement and width clamping | `done` | `T001` | 2026-03-12T17:10:11Z | 2026-03-12T17:11:56Z | `dab1e17f2c9afd04e0c688356d58f57cbb07dc4a` | Added a pure layout engine, overlap-preserving spacing, width clamping, and unit plus integration coverage for placement rules. |
 | `T004` | Implement VS Code window discovery and eligibility filtering | `done` | `T001` | 2026-03-12T17:11:57Z | 2026-03-12T17:14:52Z | `0f597b482bfad99456dca8aa4fe7fb41ca255f8d` | Added real Win32 window enumeration, VS Code eligibility filtering, and integration coverage against a real top-level test window. |
-| `T005` | Implement the tray application shell with `Arrange Now`, `Settings...`, `Run at Sign-in`, and `Exit` | `done` | `T002` | 2026-03-12T17:14:53Z | 2026-03-12T17:17:19Z | pending-commit-hash | Replaced the template form startup with a hidden tray app context, menu wiring, notification support, and tray integration tests. |
-| `T006` | Implement the Settings dialog for editing `windowWidthPx` | `in_progress` | `T002`, `T005` | 2026-03-12T17:17:19Z |  |  | Minimal modal settings UX only. |
-| `T007` | Implement manual arrange execution that discovers windows and applies computed bounds | `pending` | `T003`, `T004`, `T005` |  |  |  | First full arrange path. |
+| `T005` | Implement the tray application shell with `Arrange Now`, `Settings...`, `Run at Sign-in`, and `Exit` | `done` | `T002` | 2026-03-12T17:14:53Z | 2026-03-12T17:17:19Z | `29b7a1e9497d487bd1a9a39f5f7dda4f3f5dae34` | Replaced the template form startup with a hidden tray app context, menu wiring, notification support, and tray integration tests. |
+| `T006` | Implement the Settings dialog for editing `windowWidthPx` | `done` | `T002`, `T005` | 2026-03-12T17:17:19Z | 2026-03-12T17:20:07Z | pending-commit-hash | Added the modal settings form, width editing UI, settings-save wiring in the app, and settings dialog integration tests. |
+| `T007` | Implement manual arrange execution that discovers windows and applies computed bounds | `in_progress` | `T003`, `T004`, `T005` | 2026-03-12T17:20:07Z |  |  | First full arrange path. |
 | `T008` | Implement automatic VS Code window-open detection with debounce | `pending` | `T004`, `T007` |  |  |  | Trigger arrange from stable shell events. |
 | `T009` | Implement taskbar-order resolution for VS Code windows and fail-closed behavior when order is incomplete | `pending` | `T004` |  |  |  | Match on-screen order to taskbar order or abort. |
 | `T010` | Integrate taskbar ordering into arrange execution for both manual and automatic runs | `pending` | `T007`, `T008`, `T009` |  |  |  | Finalize correct ordering behavior. |
@@ -38,3 +38,4 @@ Last updated UTC: 2026-03-12T17:17:19Z
 - 2026-03-12T17:07:19Z: Completed T001 in commit `1b33c5b85ffd9d0ca1ba1dc4d8fcfcb3ad30b01a` and started T002.
 - 2026-03-12T17:10:11Z: Completed T002 in commit `6925308f79a3e5e15ef4092bb4a70455feee1cb1` and started T003.
 - 2026-03-12T17:17:19Z: Completed T003 in commit `dab1e17f2c9afd04e0c688356d58f57cbb07dc4a`, completed T004 in commit `0f597b482bfad99456dca8aa4fe7fb41ca255f8d`, completed T005, and started T006.
+- 2026-03-12T17:20:07Z: Completed T005 in commit `29b7a1e9497d487bd1a9a39f5f7dda4f3f5dae34`, completed T006, and started T007.
