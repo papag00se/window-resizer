@@ -34,12 +34,12 @@ Last updated: 2026-03-12
   - Depends on: `T001`
   - Deliverables: rectangle calculation logic, unit tests for happy path and edge cases
 
-- [ ] `T004` Implement VS Code window discovery and eligibility filtering.
+- [x] `T004` Implement VS Code window discovery and eligibility filtering.
   - Phase: `P2`
   - Depends on: `T001`
   - Deliverables: Win32 enumeration, filtering for visible top-level VS Code windows, tests
 
-- [ ] `T005` Implement the tray application shell with `Arrange Now`, `Settings...`, `Run at Sign-in`, and `Exit`.
+- [x] `T005` Implement the tray application shell with `Arrange Now`, `Settings...`, `Run at Sign-in`, and `Exit`.
   - Phase: `P3`
   - Depends on: `T002`
   - Deliverables: hidden app context, tray icon, menu wiring, basic notifications, tests where feasible
