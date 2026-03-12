@@ -74,12 +74,12 @@ Last updated: 2026-03-12
   - Depends on: `T002`, `T005`
   - Deliverables: scheduled task integration or documented fallback, toggle wiring, tests where practical
 
-- [ ] `T012` Add packaging and local install flow for this machine.
+- [x] `T012` Add packaging and local install flow for this machine.
   - Phase: `P5`
   - Depends on: `T010`, `T011`
   - Deliverables: publish/install script or installer path, machine-local install location, tray app launch verification
 
-- [ ] `T013` Complete end-to-end validation, update docs, and verify the installed app works on this machine.
+- [x] `T013` Complete end-to-end validation, update docs, and verify the installed app works on this machine.
   - Phase: `P6`
   - Depends on: `T012`
   - Deliverables: full test pass, docs refresh, install verification notes, final cleanup
