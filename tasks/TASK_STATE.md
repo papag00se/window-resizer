@@ -1,13 +1,13 @@
 # TASK STATE
 
-Last updated UTC: 2026-03-12T17:55:39Z
+Last updated UTC: 2026-03-12T17:57:09Z
 
 ## Overview
 
 - `overall_status`: `in_progress`
-- `current_task_id`: `T010`
-- `next_task_id`: `T010`
-- `completed_tasks`: `10`
+- `current_task_id`: `T012`
+- `next_task_id`: `T012`
+- `completed_tasks`: `11`
 - `blocked_tasks`: `0`
 - `total_tasks`: `13`
 - `active_phases`: `P1`, `P2`, `P3`, `P4`, `P5`, `P6`
@@ -25,10 +25,10 @@ Last updated UTC: 2026-03-12T17:55:39Z
 | `T006` | Implement the Settings dialog for editing `windowWidthPx` | `done` | `T002`, `T005` | 2026-03-12T17:17:19Z | 2026-03-12T17:20:07Z | `2ea71f6ab6740d380df678b36068f37cbf150e5a` | Added the modal settings form, width editing UI, settings-save wiring in the app, and settings dialog integration tests. |
 | `T007` | Implement manual arrange execution that discovers windows and applies computed bounds | `done` | `T003`, `T004`, `T005` | 2026-03-12T17:20:07Z | 2026-03-12T17:23:21Z | `aef20f0a4a4d953848f540397497ebf2a781fa5a` | Added the manual arrange coordinator, Win32 positioning service, and arrange-path integration tests including real window movement. |
 | `T008` | Implement automatic VS Code window-open detection with debounce | `done` | `T004`, `T007` | 2026-03-12T17:23:21Z | 2026-03-12T17:27:10Z | `af928f5c613986789c700a257ee8b9fb3f9f1792` | Added WinEvent-based automatic triggering, debounce scheduling, and tests that coalesced repeated eligible events. |
-| `T009` | Implement heuristic VS Code window ordering from observed open events with PID-backed fallback | `done` | `T004` | 2026-03-12T17:40:00Z | 2026-03-12T17:55:39Z | pending-commit-hash | Replaced the blocked taskbar-order approach with observed-open ordering and deterministic process-metadata fallback, plus resolver tests and docs updates. |
-| `T010` | Integrate heuristic ordering into arrange execution for both manual and automatic runs | `in_progress` | `T007`, `T008`, `T009` | 2026-03-12T17:55:39Z |  |  | Finalize ordered arrange flow with the heuristic resolver for both trigger paths. |
+| `T009` | Implement heuristic VS Code window ordering from observed open events with PID-backed fallback | `done` | `T004` | 2026-03-12T17:40:00Z | 2026-03-12T17:55:39Z | `1bea7fc1ef86aa6706553609541189e850b5ee36` | Replaced the blocked taskbar-order approach with observed-open ordering and deterministic process-metadata fallback, plus resolver tests and docs updates. |
+| `T010` | Integrate heuristic ordering into arrange execution for both manual and automatic runs | `done` | `T007`, `T008`, `T009` | 2026-03-12T17:55:39Z | 2026-03-12T17:57:09Z | pending-commit-hash | Finalized the heuristic resolver integration with arrange execution and added regression coverage that arrange order follows the observed sequence instead of raw enumeration order. |
 | `T011` | Implement startup registration and durability behavior for per-user sign-in launch and restart-on-failure | `done` | `T002`, `T005` | 2026-03-12T17:27:10Z | 2026-03-12T17:33:39Z | `7f1e6ff3115feabb0011f1a6be371f9f7939eaa8` | Added scheduled-task startup registration, restart-on-failure task XML generation, toggle coordination, and startup registration tests. |
-| `T012` | Add packaging and local install flow for this machine | `pending` | `T010`, `T011` |  |  |  | Produce an installable/publishable build and install it locally. |
+| `T012` | Add packaging and local install flow for this machine | `in_progress` | `T010`, `T011` | 2026-03-12T17:57:09Z |  |  | Produce an installable/publishable build and install it locally. |
 | `T013` | Complete end-to-end validation, update docs, and verify the installed app works on this machine | `pending` | `T012` |  |  |  | Final verification pass before completion. |
 
 ## Run Log
@@ -45,3 +45,4 @@ Last updated UTC: 2026-03-12T17:55:39Z
 - 2026-03-12T17:33:39Z: Completed T011. Marked T010, T012, and T013 blocked because they depend on the unresolved T009 taskbar-order blocker.
 - 2026-03-12T17:40:00Z: Unblocked T009 after revising the requirement to heuristic ordering from observed open events with PID-backed fallback. Reopened T010, T012, and T013 accordingly.
 - 2026-03-12T17:55:39Z: Completed T009 under the revised heuristic-ordering scope and started T010.
+- 2026-03-12T17:57:09Z: Completed T010 and started T012.

@@ -48,6 +48,27 @@ public class ManualArrangeServiceTests
         Assert.Empty(positioningService.AppliedRectangles);
     }
 
+    [Fact]
+    public void ArrangeNowUsesHeuristicOrderInsteadOfEnumerationOrder()
+    {
+        var firstObserved = CreateWindow(202);
+        var secondObserved = CreateWindow(101);
+        var resolver = new HeuristicWindowOrderResolver();
+        resolver.ObserveWindow(firstObserved);
+        resolver.ObserveWindow(secondObserved);
+        var positioningService = new FakeWindowPositioningService(new MonitorWorkArea(0, 0, 2000, 1000));
+
+        var arrangeService = new ManualArrangeService(
+            new FakeWindowSource([secondObserved, firstObserved]),
+            positioningService,
+            resolver);
+
+        var result = arrangeService.ArrangeNow(requestedWidthPx: 900);
+
+        Assert.Equal(ManualArrangeStatus.Success, result.Status);
+        Assert.Equal([202, 101], positioningService.AppliedRectangles.Select(entry => (int)entry.Handle));
+    }
+
     private static TopLevelWindowInfo CreateWindow(nint handle)
     {
         return new TopLevelWindowInfo(

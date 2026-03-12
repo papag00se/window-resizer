@@ -64,7 +64,7 @@ Last updated: 2026-03-12
   - Depends on: `T004`
   - Deliverables: observed-open order resolver, deterministic fallback chain, unit/integration tests
 
-- [ ] `T010` Integrate heuristic ordering into arrange execution for both manual and automatic runs.
+- [x] `T010` Integrate heuristic ordering into arrange execution for both manual and automatic runs.
   - Phase: `P4`
   - Depends on: `T007`, `T008`, `T009`
   - Deliverables: ordered arrange flow for manual and automatic runs, regression tests
