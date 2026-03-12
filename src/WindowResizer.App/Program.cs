@@ -27,13 +27,17 @@ static class Program
             windowOrderResolver,
             new Win32WindowVisibilityOrderSynchronizer(),
             arrangeOperationTracker);
+        TrayApplicationContext? context = null;
         using var autoArrangeController = new AutoArrangeController(
             windowEnumerator,
             arrangeService,
             windowOrderResolver,
             arrangeOperationTracker,
-            () => settings.WindowWidthPx);
-        autoArrangeController.Start();
+            () => settings.WindowWidthPx,
+            arrangeFailed: ex => context?.ShowNotification(
+                "Auto-arrange failed",
+                ex.Message,
+                ToolTipIcon.Error));
         Exception? startupArrangeException = null;
 
         try
@@ -45,8 +49,6 @@ static class Program
         {
             startupArrangeException = ex;
         }
-
-        TrayApplicationContext? context = null;
 
         context = new TrayApplicationContext(new TrayApplicationContextOptions
         {
@@ -87,6 +89,7 @@ static class Program
                 startupArrangeException.Message);
         }
 
+        autoArrangeController.Start();
         Application.Run(context);
     }    
 }

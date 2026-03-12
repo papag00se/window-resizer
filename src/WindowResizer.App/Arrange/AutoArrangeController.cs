@@ -16,7 +16,12 @@ public sealed class AutoArrangeController : IDisposable
     private readonly HeuristicWindowOrderResolver _windowOrderResolver;
     private readonly ArrangeOperationTracker _arrangeOperationTracker;
     private readonly DebouncedActionScheduler _scheduler;
+    private readonly Func<IReadOnlyList<TopLevelWindowInfo>> _startupWindowsProvider;
+    private readonly Func<IReadOnlyList<TopLevelWindowInfo>> _orderingUniverseProvider;
+    private readonly Action<Exception>? _arrangeFailed;
     private readonly WinEventDelegate _eventCallback;
+    private readonly object _knownHandlesLock = new();
+    private HashSet<nint> _knownTrackedHandles = [];
     private nint _showHook;
 
     public AutoArrangeController(
@@ -25,25 +30,28 @@ public sealed class AutoArrangeController : IDisposable
         HeuristicWindowOrderResolver windowOrderResolver,
         ArrangeOperationTracker arrangeOperationTracker,
         Func<int> widthProvider,
-        TimeSpan? debounceDelay = null)
+        TimeSpan? debounceDelay = null,
+        Func<IReadOnlyList<TopLevelWindowInfo>>? startupWindowsProvider = null,
+        Func<IReadOnlyList<TopLevelWindowInfo>>? orderingUniverseProvider = null,
+        Action<Exception>? arrangeFailed = null)
     {
         _windowEnumerator = windowEnumerator;
         _manualArrangeService = manualArrangeService;
         _windowOrderResolver = windowOrderResolver;
         _arrangeOperationTracker = arrangeOperationTracker;
         _widthProvider = widthProvider;
+        _startupWindowsProvider = startupWindowsProvider ?? _windowEnumerator.EnumerateTrackableVsCodeWindows;
+        _orderingUniverseProvider = orderingUniverseProvider ?? _windowEnumerator.EnumerateTrackableVsCodeWindows;
+        _arrangeFailed = arrangeFailed;
         _scheduler = new DebouncedActionScheduler(
             debounceDelay ?? TimeSpan.FromMilliseconds(250),
-            () => _manualArrangeService.ArrangeNow(
-                _widthProvider(),
-                synchronizeTaskbarOrder: false,
-                preferCurrentScreenOrder: false,
-                normalizeZOrder: false));
+            RunAutomaticArrange);
         _eventCallback = HandleWinEvent;
     }
 
     public void Start()
     {
+        SeedExistingWindows();
         _showHook = SetWinEventHook(
             EventObjectShow,
             EventObjectShow,
@@ -72,7 +80,17 @@ public sealed class AutoArrangeController : IDisposable
             return false;
         }
 
-        _windowOrderResolver.ObserveWindow(window);
+        var orderingUniverse = _orderingUniverseProvider();
+        if (!TryAdvanceKnownTrackedHandles(orderingUniverse))
+        {
+            return false;
+        }
+
+        if (!_windowOrderResolver.ObserveWindow(window))
+        {
+            return false;
+        }
+
         _scheduler.Request();
         return true;
     }
@@ -98,6 +116,55 @@ public sealed class AutoArrangeController : IDisposable
         uint dwmsEventTime)
     {
         HandlePotentialArrangeWindow(hwnd, idObject, idChild);
+    }
+
+    private void SeedExistingWindows()
+    {
+        var startupWindows = _startupWindowsProvider()
+            .OrderBy(window => window.CurrentLeft)
+            .ThenBy(window => window.CurrentTop)
+            .ThenBy(window => window.ProcessStartTimeUtc ?? DateTimeOffset.MaxValue)
+            .ThenBy(window => window.ProcessId)
+            .ThenBy(window => window.Handle)
+            .ToArray();
+
+        lock (_knownHandlesLock)
+        {
+            _knownTrackedHandles = startupWindows.Select(window => window.Handle).ToHashSet();
+        }
+
+        foreach (var window in startupWindows)
+        {
+            _windowOrderResolver.ObserveWindow(window);
+        }
+    }
+
+    private bool TryAdvanceKnownTrackedHandles(IReadOnlyList<TopLevelWindowInfo> orderingUniverse)
+    {
+        lock (_knownHandlesLock)
+        {
+            var nextKnownHandles = orderingUniverse.Select(window => window.Handle).ToHashSet();
+            var discoveredNewHandle = nextKnownHandles.Except(_knownTrackedHandles).Any();
+            _knownTrackedHandles = nextKnownHandles;
+            return discoveredNewHandle;
+        }
+    }
+
+    private void RunAutomaticArrange()
+    {
+        try
+        {
+            _manualArrangeService.ArrangeNow(
+                _widthProvider(),
+                synchronizeTaskbarOrder: false,
+                preferCurrentScreenOrder: false,
+                normalizeZOrder: false,
+                orderingUniverse: _orderingUniverseProvider());
+        }
+        catch (Exception ex)
+        {
+            _arrangeFailed?.Invoke(ex);
+        }
     }
 
     private delegate void WinEventDelegate(

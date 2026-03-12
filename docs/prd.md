@@ -123,6 +123,7 @@ When multiple VS Code windows are open, keeping them aligned to a consistent wid
 - Every eligible window must be resized to:
   - Height: target monitor working-area height
   - Width: saved `window width` setting for the run, after any needed clamp
+- Automatic new-window runs must preserve slot positions implied by the full tracked VS Code order, even when some older VS Code windows are minimized and therefore not moved in that run.
 - Windows must be placed left to right using evenly spaced left edges across the target monitor working area.
 - For `N` windows, working area left `L`, working width `M`, and effective width `W`:
   - If `N = 1`, `X0 = L`
@@ -157,6 +158,7 @@ When multiple VS Code windows are open, keeping them aligned to a consistent wid
 
 - No eligible VS Code windows: no-op with log entry, no error notification.
 - One eligible window: resize to target width and full working-area height, aligned to the left edge.
+- One eligible visible window with older minimized tracked VS Code windows: resize that visible window into its tracked left-to-right slot rather than collapsing it to the left edge.
 - Mixed monitor sizes: all eligible windows are placed on the trigger monitor for that run.
 - Mixed DPI monitors: width remains whatever physical pixel width the user saved, so perceived size can vary between monitors.
 - Explorer/taskbar restart: the tray icon must reappear and event listening must continue without user action.

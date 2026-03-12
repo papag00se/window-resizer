@@ -231,6 +231,11 @@ Y[i] = T
 Rect[i] = (X[i], Y[i], W, H)
 ```
 
+Automatic-run slot preservation:
+
+- When an automatic run is triggered by a newly shown eligible VS Code window, compute the left-to-right slot index from the full tracked VS Code order, including minimized but still trackable top-level VS Code windows.
+- Apply rectangles only to currently eligible windows, but use the slot index from that larger tracked order so a newly opened visible window can land to the right of older minimized windows.
+
 Application:
 
 - Use `SetWindowPos` without changing z-order.

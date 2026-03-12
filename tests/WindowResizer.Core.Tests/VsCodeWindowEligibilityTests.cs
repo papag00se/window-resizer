@@ -31,6 +31,14 @@ public class VsCodeWindowEligibilityTests
     }
 
     [Fact]
+    public void IsOrderTrackableAllowsMinimizedTopLevelVsCodeWindows()
+    {
+        var minimizedWindow = CreateWindow(processName: "Code", isMinimized: true);
+
+        Assert.True(VsCodeWindowEligibility.IsOrderTrackable(minimizedWindow));
+    }
+
+    [Fact]
     public void IsEligibleRejectsNonVsCodeProcess()
     {
         var window = CreateWindow(processName: "notepad");

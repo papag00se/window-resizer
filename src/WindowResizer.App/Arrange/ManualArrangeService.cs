@@ -29,35 +29,77 @@ public sealed class ManualArrangeService
         int requestedWidthPx,
         bool synchronizeTaskbarOrder = true,
         bool preferCurrentScreenOrder = false,
-        bool normalizeZOrder = true)
+        bool normalizeZOrder = true,
+        IReadOnlyList<TopLevelWindowInfo>? orderingUniverse = null)
     {
         using var arrangeScope = _arrangeOperationTracker.Enter();
 
-        var windows = ResolveArrangeOrder(_windowSource.EnumerateEligibleWindows(), preferCurrentScreenOrder);
-        if (windows.Count == 0)
+        var eligibleWindows = _windowSource.EnumerateEligibleWindows();
+        var placements = ResolvePlacements(eligibleWindows, preferCurrentScreenOrder, orderingUniverse);
+        if (placements.Count == 0)
         {
             return new ManualArrangeResult(ManualArrangeStatus.NoEligibleWindows, 0, 0);
         }
 
         if (synchronizeTaskbarOrder)
         {
-            _windowVisibilityOrderSynchronizer.SynchronizeOrder(windows);
+            _windowVisibilityOrderSynchronizer.SynchronizeOrder(placements.Select(placement => placement.Window).ToArray());
         }
 
-        var workArea = _windowPositioningService.GetWorkAreaForWindow(windows[0].Handle);
-        var plan = WindowLayoutEngine.CreateLayout(workArea, requestedWidthPx, windows.Count);
+        var workArea = _windowPositioningService.GetWorkAreaForWindow(placements[0].Window.Handle);
+        var plan = WindowLayoutEngine.CreateLayout(workArea, requestedWidthPx, placements.Max(placement => placement.SlotIndex) + 1);
 
-        for (var index = 0; index < windows.Count; index++)
+        foreach (var placement in placements)
         {
-            _windowPositioningService.ApplyWindowRect(windows[index].Handle, plan.Rectangles[index]);
+            _windowPositioningService.ApplyWindowRect(placement.Window.Handle, plan.Rectangles[placement.SlotIndex]);
         }
 
         if (normalizeZOrder)
         {
-            _windowPositioningService.ApplyWindowZOrder(windows.Select(window => window.Handle).ToArray());
+            _windowPositioningService.ApplyWindowZOrder(placements.Select(placement => placement.Window.Handle).ToArray());
         }
 
-        return new ManualArrangeResult(ManualArrangeStatus.Success, windows.Count, plan.EffectiveWidthPx);
+        return new ManualArrangeResult(ManualArrangeStatus.Success, placements.Count, plan.EffectiveWidthPx);
+    }
+
+    private IReadOnlyList<WindowPlacement> ResolvePlacements(
+        IReadOnlyList<TopLevelWindowInfo> eligibleWindows,
+        bool preferCurrentScreenOrder)
+    {
+        var orderedEligibleWindows = ResolveArrangeOrder(eligibleWindows, preferCurrentScreenOrder);
+        return orderedEligibleWindows
+            .Select((window, index) => new WindowPlacement(window, index))
+            .ToArray();
+    }
+
+    private IReadOnlyList<WindowPlacement> ResolvePlacements(
+        IReadOnlyList<TopLevelWindowInfo> eligibleWindows,
+        bool preferCurrentScreenOrder,
+        IReadOnlyList<TopLevelWindowInfo>? orderingUniverse)
+    {
+        if (orderingUniverse is null || preferCurrentScreenOrder)
+        {
+            return ResolvePlacements(eligibleWindows, preferCurrentScreenOrder);
+        }
+
+        var orderedUniverse = ResolveArrangeOrder(orderingUniverse, preferCurrentScreenOrder: false);
+        var eligibleWindowsByHandle = eligibleWindows.ToDictionary(window => window.Handle);
+        var placements = new List<WindowPlacement>(eligibleWindows.Count);
+
+        for (var index = 0; index < orderedUniverse.Count; index++)
+        {
+            if (eligibleWindowsByHandle.TryGetValue(orderedUniverse[index].Handle, out var window))
+            {
+                placements.Add(new WindowPlacement(window, index));
+            }
+        }
+
+        if (placements.Count > 0)
+        {
+            return placements;
+        }
+
+        return ResolvePlacements(eligibleWindows, preferCurrentScreenOrder: false);
     }
 
     private IReadOnlyList<TopLevelWindowInfo> ResolveArrangeOrder(
@@ -80,4 +122,6 @@ public sealed class ManualArrangeService
             .ThenBy(window => heuristicIndexByHandle[window.Handle])
             .ToArray();
     }
+
+    private sealed record WindowPlacement(TopLevelWindowInfo Window, int SlotIndex);
 }

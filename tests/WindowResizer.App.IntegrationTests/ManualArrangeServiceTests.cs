@@ -143,6 +143,38 @@ public class ManualArrangeServiceTests
         Assert.Empty(positioningService.ZOrderTopToBottom);
     }
 
+    [Fact]
+    public void ArrangeNowCanPreserveSlotsFromTrackedWindowsThatAreCurrentlyMinimized()
+    {
+        var resolver = new HeuristicWindowOrderResolver();
+        var minimizedOlder = CreateWindow(101);
+        var visibleNewer = CreateWindow(202);
+        resolver.ObserveWindow(minimizedOlder);
+        resolver.ObserveWindow(visibleNewer);
+        var positioningService = new FakeWindowPositioningService(new MonitorWorkArea(0, 0, 2200, 1000));
+        var visibilitySynchronizer = new FakeWindowVisibilityOrderSynchronizer();
+        var arrangeOperationTracker = new ArrangeOperationTracker();
+        var arrangeService = new ManualArrangeService(
+            new FakeWindowSource([visibleNewer]),
+            positioningService,
+            resolver,
+            visibilitySynchronizer,
+            arrangeOperationTracker);
+
+        var result = arrangeService.ArrangeNow(
+            requestedWidthPx: 1000,
+            synchronizeTaskbarOrder: false,
+            preferCurrentScreenOrder: false,
+            normalizeZOrder: false,
+            orderingUniverse: [minimizedOlder, visibleNewer]);
+
+        Assert.Equal(ManualArrangeStatus.Success, result.Status);
+        Assert.Single(positioningService.AppliedRectangles);
+        Assert.Equal(
+            (202, new WindowLayoutRect(1200, 0, 1000, 1000)),
+            ((int)positioningService.AppliedRectangles[0].Handle, positioningService.AppliedRectangles[0].Rectangle));
+    }
+
     private static TopLevelWindowInfo CreateWindow(nint handle, int currentLeft = 0, int currentTop = 0)
     {
         return new TopLevelWindowInfo(

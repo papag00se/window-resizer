@@ -8,7 +8,7 @@ public sealed class HeuristicWindowOrderResolver
     private readonly Dictionary<nint, long> _observedOrder = [];
     private long _nextSequence = 1;
 
-    public void ObserveWindow(TopLevelWindowInfo window)
+    public bool ObserveWindow(TopLevelWindowInfo window)
     {
         ArgumentNullException.ThrowIfNull(window);
 
@@ -16,10 +16,11 @@ public sealed class HeuristicWindowOrderResolver
         {
             if (_observedOrder.ContainsKey(window.Handle))
             {
-                return;
+                return false;
             }
 
             _observedOrder[window.Handle] = _nextSequence++;
+            return true;
         }
     }
 

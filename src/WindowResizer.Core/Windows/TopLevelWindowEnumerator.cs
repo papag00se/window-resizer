@@ -35,6 +35,13 @@ public class TopLevelWindowEnumerator
             .ToArray();
     }
 
+    public IReadOnlyList<TopLevelWindowInfo> EnumerateTrackableVsCodeWindows()
+    {
+        return EnumerateAll()
+            .Where(VsCodeWindowEligibility.IsOrderTrackable)
+            .ToArray();
+    }
+
     private static TopLevelWindowInfo? TryCreateWindowInfo(IntPtr hWnd)
     {
         var processInfo = TryGetProcessInfo(hWnd);
