@@ -1,4 +1,5 @@
 using WindowResizer.App.Tray;
+using WindowResizer.App.Arrange;
 using WindowResizer.Core.Settings;
 using WindowResizer.App.Settings;
 
@@ -11,13 +12,16 @@ static class Program
 
         var settingsStore = new AppSettingsStore();
         var settings = settingsStore.Load();
+        var arrangeService = new ManualArrangeService(
+            new EligibleVsCodeWindowSource(),
+            new Win32WindowPositioningService());
 
         TrayApplicationContext? context = null;
 
         context = new TrayApplicationContext(new TrayApplicationContextOptions
         {
             RunAtSignIn = settings.RunAtSignIn,
-            ArrangeNowRequested = () => { },
+            ArrangeNowRequested = () => arrangeService.ArrangeNow(settings.WindowWidthPx),
             SettingsRequested = () =>
             {
                 using var settingsForm = new SettingsForm(settings);

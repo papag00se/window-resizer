@@ -49,7 +49,7 @@ Last updated: 2026-03-12
   - Depends on: `T002`, `T005`
   - Deliverables: modal settings form, validation, persistence integration, tests
 
-- [ ] `T007` Implement manual arrange execution that discovers windows and applies computed bounds.
+- [x] `T007` Implement manual arrange execution that discovers windows and applies computed bounds.
   - Phase: `P3`
   - Depends on: `T003`, `T004`, `T005`
   - Deliverables: arrange pipeline, failure handling, integration tests with real windows where feasible
