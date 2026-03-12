@@ -6,7 +6,10 @@ namespace WindowResizer.App.Arrange;
 public sealed class Win32WindowPositioningService : IWindowPositioningService
 {
     private const uint MonitorDefaultToNearest = 2;
+    private static readonly nint HwndTop = new(0);
     private const uint SwpNoZOrder = 0x0004;
+    private const uint SwpNoMove = 0x0002;
+    private const uint SwpNoSize = 0x0001;
     private const uint SwpNoActivate = 0x0010;
 
     public MonitorWorkArea GetWorkAreaForWindow(nint handle)
@@ -47,6 +50,26 @@ public sealed class Win32WindowPositioningService : IWindowPositioningService
                 SwpNoZOrder | SwpNoActivate))
         {
             throw new InvalidOperationException($"Could not move window handle {handle}.");
+        }
+    }
+
+    public void ApplyWindowZOrder(IReadOnlyList<nint> handlesTopToBottom)
+    {
+        ArgumentNullException.ThrowIfNull(handlesTopToBottom);
+
+        for (var index = handlesTopToBottom.Count - 1; index >= 0; index--)
+        {
+            if (!SetWindowPos(
+                    handlesTopToBottom[index],
+                    HwndTop,
+                    0,
+                    0,
+                    0,
+                    0,
+                    SwpNoMove | SwpNoSize | SwpNoActivate))
+            {
+                throw new InvalidOperationException($"Could not update Z order for window handle {handlesTopToBottom[index]}.");
+            }
         }
     }
 

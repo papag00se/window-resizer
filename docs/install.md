@@ -11,11 +11,13 @@ Last updated: 2026-03-12
 ## Install Location
 
 - `%LocalAppData%\WindowResizer\current`
+- Start Menu shortcut: `%AppData%\Microsoft\Windows\Start Menu\Programs\Window Resizer.lnk`
 
 ## What The Script Does
 
 - publishes `src/WindowResizer.App`
 - copies the published files into the local install directory
+- creates a per-user Start Menu shortcut for `Window Resizer`
 - stops an existing `WindowResizer.App` process if one is already running
 - launches the installed executable
 

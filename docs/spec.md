@@ -87,7 +87,6 @@ Primary approach:
 - Use `SetWinEventHook` with out-of-context hooks because Microsoft documents that the caller thread must have a message loop and because the hook is appropriate for receiving window events without injecting into the target process.
 - Listen at minimum for:
   - `EVENT_OBJECT_SHOW`
-  - `EVENT_SYSTEM_FOREGROUND`
   - `EVENT_OBJECT_LOCATIONCHANGE` only if needed during validation
 
 Implementation notes:
@@ -96,6 +95,7 @@ Implementation notes:
 - Keep a short debounce window, such as 150-300 ms, keyed by HWND.
 - Ignore events from child objects and non-window object IDs.
 - Automatic runs from this path must call the arrange service with taskbar synchronization disabled.
+- Do not treat foreground activation as a creation/open signal; taskbar clicks and normal focus changes must not schedule rearrangement.
 
 Rejected approach:
 
@@ -170,11 +170,20 @@ Rationale:
 Manual arrange ordering override:
 
 - Manual `Arrange Now` should prefer the current on-screen left-to-right order of eligible windows.
+- Startup recovery with multiple pre-existing windows should use that same current on-screen left-to-right order.
 - Use current window bounds from discovery and sort manual runs by:
   - current left edge
   - current top edge
   - heuristic order index as the final tie-breaker
-- Startup recovery and automatic new-window runs should continue using the heuristic order directly.
+- Automatic new-window runs should continue using the heuristic order directly.
+
+Z-order normalization rule:
+
+- Manual `Arrange Now` and startup recovery with multiple pre-existing windows must normalize Z order after the final rectangles are applied.
+- The desired stack is:
+  - left-most window top-most
+  - then each subsequent window directly beneath it from left to right
+- Automatic new-window runs must not change Z order.
 
 ### 6. Layout Layer
 
@@ -227,6 +236,7 @@ Application:
 - Use `SetWindowPos` without changing z-order.
 - When taskbar synchronization is enabled for the trigger, perform hide/show ordering first.
 - Apply final bounds in heuristic window order from left to right.
+- When the trigger is manual arrange or startup recovery with multiple pre-existing windows, apply a follow-up Z-order normalization pass after the rectangles are set.
 - Suppress redraw churn where practical, but do not introduce a second animation system.
 
 ### 7. Tray UX Layer

@@ -40,3 +40,4 @@ dotnet test WindowResizer.sln
 
 - Install script: `.\scripts\install-local.ps1`
 - Install location: `%LocalAppData%\WindowResizer\current`
+- Start search entry: `%AppData%\Microsoft\Windows\Start Menu\Programs\Window Resizer.lnk`

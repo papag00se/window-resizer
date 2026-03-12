@@ -15,6 +15,7 @@ static class Program
         var settingsStore = new AppSettingsStore();
         var settings = settingsStore.Load();
         var windowOrderResolver = new HeuristicWindowOrderResolver();
+        var arrangeOperationTracker = new ArrangeOperationTracker();
         var runAtSignInService = new RunAtSignInService(
             settingsStore,
             new ScheduledTaskStartupRegistrationService());
@@ -24,11 +25,13 @@ static class Program
             windowSource,
             new Win32WindowPositioningService(),
             windowOrderResolver,
-            new Win32WindowVisibilityOrderSynchronizer());
+            new Win32WindowVisibilityOrderSynchronizer(),
+            arrangeOperationTracker);
         using var autoArrangeController = new AutoArrangeController(
             windowEnumerator,
             arrangeService,
             windowOrderResolver,
+            arrangeOperationTracker,
             () => settings.WindowWidthPx);
         autoArrangeController.Start();
         Exception? startupArrangeException = null;
@@ -51,7 +54,8 @@ static class Program
             ArrangeNowRequested = () => arrangeService.ArrangeNow(
                 settings.WindowWidthPx,
                 synchronizeTaskbarOrder: true,
-                preferCurrentScreenOrder: true),
+                preferCurrentScreenOrder: true,
+                normalizeZOrder: true),
             SettingsRequested = () =>
             {
                 using var settingsForm = new SettingsForm(settings);

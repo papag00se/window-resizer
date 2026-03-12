@@ -21,6 +21,10 @@ public sealed class StartupArrangeCoordinator
             return null;
         }
 
-        return _manualArrangeService.ArrangeNow(requestedWidthPx, synchronizeTaskbarOrder: true);
+        return _manualArrangeService.ArrangeNow(
+            requestedWidthPx,
+            synchronizeTaskbarOrder: true,
+            preferCurrentScreenOrder: true,
+            normalizeZOrder: true);
     }
 }

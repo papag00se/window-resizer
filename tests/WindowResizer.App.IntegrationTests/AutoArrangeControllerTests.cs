@@ -11,16 +11,19 @@ public class AutoArrangeControllerTests
     {
         using var fired = new ManualResetEventSlim(false);
         var resolver = new HeuristicWindowOrderResolver();
+        var arrangeOperationTracker = new ArrangeOperationTracker();
         var visibilitySynchronizer = new FakeWindowVisibilityOrderSynchronizer();
         var arrangeService = new ManualArrangeService(
             new FakeWindowSource([CreateWindow(100)]),
             new FakeWindowPositioningService(new MonitorWorkArea(0, 0, 1600, 900), fired),
             resolver,
-            visibilitySynchronizer);
+            visibilitySynchronizer,
+            arrangeOperationTracker);
         using var controller = new AutoArrangeController(
             new FakeWindowEnumerator(CreateWindow(100)),
             arrangeService,
             resolver,
+            arrangeOperationTracker,
             () => 1000,
             debounceDelay: TimeSpan.FromMilliseconds(75));
 
@@ -36,16 +39,19 @@ public class AutoArrangeControllerTests
     {
         using var fired = new ManualResetEventSlim(false);
         var resolver = new HeuristicWindowOrderResolver();
+        var arrangeOperationTracker = new ArrangeOperationTracker();
         var visibilitySynchronizer = new FakeWindowVisibilityOrderSynchronizer();
         var arrangeService = new ManualArrangeService(
             new FakeWindowSource([CreateWindow(100)]),
             new FakeWindowPositioningService(new MonitorWorkArea(0, 0, 1600, 900), fired),
             resolver,
-            visibilitySynchronizer);
+            visibilitySynchronizer,
+            arrangeOperationTracker);
         using var controller = new AutoArrangeController(
             new FakeWindowEnumerator(CreateWindow(100), CreateWindow(200, processName: "notepad")),
             arrangeService,
             resolver,
+            arrangeOperationTracker,
             () => 1000,
             debounceDelay: TimeSpan.FromMilliseconds(50));
 
@@ -53,6 +59,99 @@ public class AutoArrangeControllerTests
         Assert.False(controller.HandlePotentialArrangeWindow(200, objectId: 0, childId: 0));
         Assert.False(fired.Wait(TimeSpan.FromMilliseconds(200)));
         Assert.Empty(visibilitySynchronizer.SynchronizedHandles);
+    }
+
+    [Fact]
+    public void ClickingTaskbarActivatedWindowDoesNotScheduleAnArrangeWhenNoShowEventOccurs()
+    {
+        using var fired = new ManualResetEventSlim(false);
+        var resolver = new HeuristicWindowOrderResolver();
+        var arrangeOperationTracker = new ArrangeOperationTracker();
+        var visibilitySynchronizer = new FakeWindowVisibilityOrderSynchronizer();
+        var arrangeService = new ManualArrangeService(
+            new FakeWindowSource([CreateWindow(100)]),
+            new FakeWindowPositioningService(new MonitorWorkArea(0, 0, 1600, 900), fired),
+            resolver,
+            visibilitySynchronizer,
+            arrangeOperationTracker);
+        using var controller = new AutoArrangeController(
+            new FakeWindowEnumerator(CreateWindow(100)),
+            arrangeService,
+            resolver,
+            arrangeOperationTracker,
+            () => 1000,
+            debounceDelay: TimeSpan.FromMilliseconds(50));
+
+        Assert.False(fired.Wait(TimeSpan.FromMilliseconds(200)));
+        Assert.Empty(visibilitySynchronizer.SynchronizedHandles);
+    }
+
+    [Fact]
+    public void HandlePotentialArrangeWindowIgnoresEventsRaisedDuringAnActiveArrangeOperation()
+    {
+        using var fired = new ManualResetEventSlim(false);
+        var resolver = new HeuristicWindowOrderResolver();
+        var currentTime = DateTimeOffset.Parse("2026-03-12T18:00:00Z");
+        var arrangeOperationTracker = new ArrangeOperationTracker(
+            utcNow: () => currentTime,
+            cooldownDuration: TimeSpan.FromSeconds(2));
+        var visibilitySynchronizer = new FakeWindowVisibilityOrderSynchronizer();
+        var arrangeService = new ManualArrangeService(
+            new FakeWindowSource([CreateWindow(100)]),
+            new FakeWindowPositioningService(new MonitorWorkArea(0, 0, 1600, 900), fired),
+            resolver,
+            visibilitySynchronizer,
+            arrangeOperationTracker);
+        using var controller = new AutoArrangeController(
+            new FakeWindowEnumerator(CreateWindow(100)),
+            arrangeService,
+            resolver,
+            arrangeOperationTracker,
+            () => 1000,
+            debounceDelay: TimeSpan.FromMilliseconds(50));
+
+        using var arrangeScope = arrangeOperationTracker.Enter();
+
+        Assert.False(controller.HandlePotentialArrangeWindow(100, objectId: 0, childId: 0));
+        Assert.False(fired.Wait(TimeSpan.FromMilliseconds(200)));
+        Assert.Empty(visibilitySynchronizer.SynchronizedHandles);
+    }
+
+    [Fact]
+    public void HandlePotentialArrangeWindowIgnoresEventsRaisedImmediatelyAfterArrangeCompletion()
+    {
+        using var fired = new ManualResetEventSlim(false);
+        var resolver = new HeuristicWindowOrderResolver();
+        var currentTime = DateTimeOffset.Parse("2026-03-12T18:00:00Z");
+        var arrangeOperationTracker = new ArrangeOperationTracker(
+            utcNow: () => currentTime,
+            cooldownDuration: TimeSpan.FromSeconds(2));
+        var visibilitySynchronizer = new FakeWindowVisibilityOrderSynchronizer();
+        var arrangeService = new ManualArrangeService(
+            new FakeWindowSource([CreateWindow(100)]),
+            new FakeWindowPositioningService(new MonitorWorkArea(0, 0, 1600, 900), fired),
+            resolver,
+            visibilitySynchronizer,
+            arrangeOperationTracker);
+        using var controller = new AutoArrangeController(
+            new FakeWindowEnumerator(CreateWindow(100)),
+            arrangeService,
+            resolver,
+            arrangeOperationTracker,
+            () => 1000,
+            debounceDelay: TimeSpan.FromMilliseconds(50));
+
+        using (arrangeOperationTracker.Enter())
+        {
+        }
+
+        Assert.False(controller.HandlePotentialArrangeWindow(100, objectId: 0, childId: 0));
+        Assert.False(fired.Wait(TimeSpan.FromMilliseconds(200)));
+
+        currentTime = currentTime.AddSeconds(3);
+
+        Assert.True(controller.HandlePotentialArrangeWindow(100, objectId: 0, childId: 0));
+        Assert.True(fired.Wait(TimeSpan.FromSeconds(2)));
     }
 
     private static TopLevelWindowInfo CreateWindow(nint handle, string processName = "Code")
@@ -95,6 +194,10 @@ public class AutoArrangeControllerTests
         public void ApplyWindowRect(nint handle, WindowLayoutRect rectangle)
         {
             fired.Set();
+        }
+
+        public void ApplyWindowZOrder(IReadOnlyList<nint> handlesTopToBottom)
+        {
         }
     }
 

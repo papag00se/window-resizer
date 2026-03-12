@@ -9,6 +9,7 @@ public sealed class TrayApplicationContext : ApplicationContext
     private readonly ToolStripMenuItem _settingsMenuItem;
     private readonly ToolStripMenuItem _runAtSignInMenuItem;
     private readonly ToolStripMenuItem _exitMenuItem;
+    private readonly Icon _trayIconAsset;
 
     public TrayApplicationContext(TrayApplicationContextOptions options)
     {
@@ -38,10 +39,11 @@ public sealed class TrayApplicationContext : ApplicationContext
                 _exitMenuItem
             ]);
 
+        _trayIconAsset = LayeredWindowTrayIcon.Create();
         TrayIcon = new NotifyIcon
         {
             Text = ProductDefaults.ApplicationName,
-            Icon = SystemIcons.Application,
+            Icon = _trayIconAsset,
             ContextMenuStrip = Menu,
             Visible = true
         };
@@ -73,6 +75,7 @@ public sealed class TrayApplicationContext : ApplicationContext
     {
         TrayIcon.Visible = false;
         TrayIcon.Dispose();
+        _trayIconAsset.Dispose();
         Menu.Dispose();
         base.ExitThreadCore();
     }

@@ -16,17 +16,20 @@ public class ManualArrangeServiceTests
             ]);
         var positioningService = new FakeWindowPositioningService(new MonitorWorkArea(0, 0, 2000, 1000));
         var visibilitySynchronizer = new FakeWindowVisibilityOrderSynchronizer();
+        var arrangeOperationTracker = new ArrangeOperationTracker();
         var arrangeService = new ManualArrangeService(
             windowSource,
             positioningService,
             new HeuristicWindowOrderResolver(),
-            visibilitySynchronizer);
+            visibilitySynchronizer,
+            arrangeOperationTracker);
 
         var result = arrangeService.ArrangeNow(requestedWidthPx: 900);
 
         Assert.Equal(ManualArrangeStatus.Success, result.Status);
         Assert.Equal(2, result.ArrangedWindowCount);
         Assert.Equal([101, 202], visibilitySynchronizer.SynchronizedHandles.Select(handle => (int)handle));
+        Assert.Equal([101, 202], positioningService.ZOrderTopToBottom.Select(handle => (int)handle));
         Assert.Equal(
             [
                 (101, new WindowLayoutRect(0, 0, 900, 1000)),
@@ -40,17 +43,20 @@ public class ManualArrangeServiceTests
     {
         var positioningService = new FakeWindowPositioningService(new MonitorWorkArea(0, 0, 1600, 900));
         var visibilitySynchronizer = new FakeWindowVisibilityOrderSynchronizer();
+        var arrangeOperationTracker = new ArrangeOperationTracker();
         var arrangeService = new ManualArrangeService(
             new FakeWindowSource([]),
             positioningService,
             new HeuristicWindowOrderResolver(),
-            visibilitySynchronizer);
+            visibilitySynchronizer,
+            arrangeOperationTracker);
 
         var result = arrangeService.ArrangeNow(requestedWidthPx: 1000);
 
         Assert.Equal(ManualArrangeStatus.NoEligibleWindows, result.Status);
         Assert.Equal(0, result.ArrangedWindowCount);
         Assert.Empty(positioningService.AppliedRectangles);
+        Assert.Empty(positioningService.ZOrderTopToBottom);
         Assert.Empty(visibilitySynchronizer.SynchronizedHandles);
     }
 
@@ -64,18 +70,21 @@ public class ManualArrangeServiceTests
         resolver.ObserveWindow(secondObserved);
         var positioningService = new FakeWindowPositioningService(new MonitorWorkArea(0, 0, 2000, 1000));
         var visibilitySynchronizer = new FakeWindowVisibilityOrderSynchronizer();
+        var arrangeOperationTracker = new ArrangeOperationTracker();
 
         var arrangeService = new ManualArrangeService(
             new FakeWindowSource([secondObserved, firstObserved]),
             positioningService,
             resolver,
-            visibilitySynchronizer);
+            visibilitySynchronizer,
+            arrangeOperationTracker);
 
         var result = arrangeService.ArrangeNow(requestedWidthPx: 900);
 
         Assert.Equal(ManualArrangeStatus.Success, result.Status);
         Assert.Equal([202, 101], visibilitySynchronizer.SynchronizedHandles.Select(handle => (int)handle));
         Assert.Equal([202, 101], positioningService.AppliedRectangles.Select(entry => (int)entry.Handle));
+        Assert.Equal([202, 101], positioningService.ZOrderTopToBottom.Select(handle => (int)handle));
     }
 
     [Fact]
@@ -90,11 +99,13 @@ public class ManualArrangeServiceTests
         resolver.ObserveWindow(middle);
         var positioningService = new FakeWindowPositioningService(new MonitorWorkArea(0, 0, 2200, 1000));
         var visibilitySynchronizer = new FakeWindowVisibilityOrderSynchronizer();
+        var arrangeOperationTracker = new ArrangeOperationTracker();
         var arrangeService = new ManualArrangeService(
             new FakeWindowSource([rightmost, middle, leftmost]),
             positioningService,
             resolver,
-            visibilitySynchronizer);
+            visibilitySynchronizer,
+            arrangeOperationTracker);
 
         var result = arrangeService.ArrangeNow(
             requestedWidthPx: 900,
@@ -104,6 +115,7 @@ public class ManualArrangeServiceTests
         Assert.Equal(ManualArrangeStatus.Success, result.Status);
         Assert.Equal([202, 303, 101], visibilitySynchronizer.SynchronizedHandles.Select(handle => (int)handle));
         Assert.Equal([202, 303, 101], positioningService.AppliedRectangles.Select(entry => (int)entry.Handle));
+        Assert.Equal([202, 303, 101], positioningService.ZOrderTopToBottom.Select(handle => (int)handle));
     }
 
     [Fact]
@@ -111,17 +123,24 @@ public class ManualArrangeServiceTests
     {
         var positioningService = new FakeWindowPositioningService(new MonitorWorkArea(0, 0, 2000, 1000));
         var visibilitySynchronizer = new FakeWindowVisibilityOrderSynchronizer();
+        var arrangeOperationTracker = new ArrangeOperationTracker();
         var arrangeService = new ManualArrangeService(
             new FakeWindowSource([CreateWindow(101), CreateWindow(202)]),
             positioningService,
             new HeuristicWindowOrderResolver(),
-            visibilitySynchronizer);
+            visibilitySynchronizer,
+            arrangeOperationTracker);
 
-        var result = arrangeService.ArrangeNow(requestedWidthPx: 900, synchronizeTaskbarOrder: false);
+        var result = arrangeService.ArrangeNow(
+            requestedWidthPx: 900,
+            synchronizeTaskbarOrder: false,
+            preferCurrentScreenOrder: false,
+            normalizeZOrder: false);
 
         Assert.Equal(ManualArrangeStatus.Success, result.Status);
         Assert.Empty(visibilitySynchronizer.SynchronizedHandles);
         Assert.Equal(2, positioningService.AppliedRectangles.Count);
+        Assert.Empty(positioningService.ZOrderTopToBottom);
     }
 
     private static TopLevelWindowInfo CreateWindow(nint handle, int currentLeft = 0, int currentTop = 0)
@@ -150,12 +169,18 @@ public class ManualArrangeServiceTests
     private sealed class FakeWindowPositioningService(MonitorWorkArea workArea) : IWindowPositioningService
     {
         public List<(nint Handle, WindowLayoutRect Rectangle)> AppliedRectangles { get; } = [];
+        public List<nint> ZOrderTopToBottom { get; } = [];
 
         public MonitorWorkArea GetWorkAreaForWindow(nint handle) => workArea;
 
         public void ApplyWindowRect(nint handle, WindowLayoutRect rectangle)
         {
             AppliedRectangles.Add((handle, rectangle));
+        }
+
+        public void ApplyWindowZOrder(IReadOnlyList<nint> handlesTopToBottom)
+        {
+            ZOrderTopToBottom.AddRange(handlesTopToBottom);
         }
     }
 

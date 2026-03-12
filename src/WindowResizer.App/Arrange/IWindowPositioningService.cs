@@ -7,4 +7,6 @@ public interface IWindowPositioningService
     MonitorWorkArea GetWorkAreaForWindow(nint handle);
 
     void ApplyWindowRect(nint handle, WindowLayoutRect rectangle);
+
+    void ApplyWindowZOrder(IReadOnlyList<nint> handlesTopToBottom);
 }

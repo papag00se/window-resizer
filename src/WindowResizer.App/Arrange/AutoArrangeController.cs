@@ -6,7 +6,6 @@ namespace WindowResizer.App.Arrange;
 public sealed class AutoArrangeController : IDisposable
 {
     private const uint EventObjectShow = 0x8002;
-    private const uint EventSystemForeground = 0x0003;
     private const int ObjIdWindow = 0;
     private const uint WineventOutOfContext = 0x0000;
     private const uint WineventSkipOwnProcess = 0x0002;
@@ -15,25 +14,31 @@ public sealed class AutoArrangeController : IDisposable
     private readonly Func<int> _widthProvider;
     private readonly ManualArrangeService _manualArrangeService;
     private readonly HeuristicWindowOrderResolver _windowOrderResolver;
+    private readonly ArrangeOperationTracker _arrangeOperationTracker;
     private readonly DebouncedActionScheduler _scheduler;
     private readonly WinEventDelegate _eventCallback;
     private nint _showHook;
-    private nint _foregroundHook;
 
     public AutoArrangeController(
         TopLevelWindowEnumerator windowEnumerator,
         ManualArrangeService manualArrangeService,
         HeuristicWindowOrderResolver windowOrderResolver,
+        ArrangeOperationTracker arrangeOperationTracker,
         Func<int> widthProvider,
         TimeSpan? debounceDelay = null)
     {
         _windowEnumerator = windowEnumerator;
         _manualArrangeService = manualArrangeService;
         _windowOrderResolver = windowOrderResolver;
+        _arrangeOperationTracker = arrangeOperationTracker;
         _widthProvider = widthProvider;
         _scheduler = new DebouncedActionScheduler(
             debounceDelay ?? TimeSpan.FromMilliseconds(250),
-            () => _manualArrangeService.ArrangeNow(_widthProvider(), synchronizeTaskbarOrder: false));
+            () => _manualArrangeService.ArrangeNow(
+                _widthProvider(),
+                synchronizeTaskbarOrder: false,
+                preferCurrentScreenOrder: false,
+                normalizeZOrder: false));
         _eventCallback = HandleWinEvent;
     }
 
@@ -47,19 +52,15 @@ public sealed class AutoArrangeController : IDisposable
             0,
             0,
             WineventOutOfContext | WineventSkipOwnProcess);
-
-        _foregroundHook = SetWinEventHook(
-            EventSystemForeground,
-            EventSystemForeground,
-            nint.Zero,
-            _eventCallback,
-            0,
-            0,
-            WineventOutOfContext | WineventSkipOwnProcess);
     }
 
     public bool HandlePotentialArrangeWindow(nint handle, int objectId, int childId)
     {
+        if (_arrangeOperationTracker.IsSuppressed)
+        {
+            return false;
+        }
+
         if (handle == nint.Zero || objectId != ObjIdWindow || childId != 0)
         {
             return false;
@@ -82,12 +83,6 @@ public sealed class AutoArrangeController : IDisposable
         {
             UnhookWinEvent(_showHook);
             _showHook = nint.Zero;
-        }
-
-        if (_foregroundHook != nint.Zero)
-        {
-            UnhookWinEvent(_foregroundHook);
-            _foregroundHook = nint.Zero;
         }
 
         _scheduler.Dispose();
