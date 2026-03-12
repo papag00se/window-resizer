@@ -54,7 +54,7 @@ Last updated: 2026-03-12
   - Depends on: `T003`, `T004`, `T005`
   - Deliverables: arrange pipeline, failure handling, integration tests with real windows where feasible
 
-- [ ] `T008` Implement automatic VS Code window-open detection with debounce.
+- [x] `T008` Implement automatic VS Code window-open detection with debounce.
   - Phase: `P4`
   - Depends on: `T004`, `T007`
   - Deliverables: WinEvent hook integration, stable event filtering, tests

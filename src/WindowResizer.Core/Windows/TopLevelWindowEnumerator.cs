@@ -3,8 +3,13 @@ using System.Text;
 
 namespace WindowResizer.Core.Windows;
 
-public sealed class TopLevelWindowEnumerator
+public class TopLevelWindowEnumerator
 {
+    public virtual TopLevelWindowInfo? TryGetWindowInfo(nint handle)
+    {
+        return TryCreateWindowInfo(handle);
+    }
+
     public IReadOnlyList<TopLevelWindowInfo> EnumerateAll()
     {
         var windows = new List<TopLevelWindowInfo>();

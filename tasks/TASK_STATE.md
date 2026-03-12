@@ -1,13 +1,13 @@
 # TASK STATE
 
-Last updated UTC: 2026-03-12T17:23:21Z
+Last updated UTC: 2026-03-12T17:27:10Z
 
 ## Overview
 
 - `overall_status`: `in_progress`
-- `current_task_id`: `T008`
-- `next_task_id`: `T008`
-- `completed_tasks`: `7`
+- `current_task_id`: `T009`
+- `next_task_id`: `T009`
+- `completed_tasks`: `8`
 - `blocked_tasks`: `0`
 - `total_tasks`: `13`
 - `active_phases`: `P1`, `P2`, `P3`, `P4`, `P5`, `P6`
@@ -23,9 +23,9 @@ Last updated UTC: 2026-03-12T17:23:21Z
 | `T004` | Implement VS Code window discovery and eligibility filtering | `done` | `T001` | 2026-03-12T17:11:57Z | 2026-03-12T17:14:52Z | `0f597b482bfad99456dca8aa4fe7fb41ca255f8d` | Added real Win32 window enumeration, VS Code eligibility filtering, and integration coverage against a real top-level test window. |
 | `T005` | Implement the tray application shell with `Arrange Now`, `Settings...`, `Run at Sign-in`, and `Exit` | `done` | `T002` | 2026-03-12T17:14:53Z | 2026-03-12T17:17:19Z | `29b7a1e9497d487bd1a9a39f5f7dda4f3f5dae34` | Replaced the template form startup with a hidden tray app context, menu wiring, notification support, and tray integration tests. |
 | `T006` | Implement the Settings dialog for editing `windowWidthPx` | `done` | `T002`, `T005` | 2026-03-12T17:17:19Z | 2026-03-12T17:20:07Z | `2ea71f6ab6740d380df678b36068f37cbf150e5a` | Added the modal settings form, width editing UI, settings-save wiring in the app, and settings dialog integration tests. |
-| `T007` | Implement manual arrange execution that discovers windows and applies computed bounds | `done` | `T003`, `T004`, `T005` | 2026-03-12T17:20:07Z | 2026-03-12T17:23:21Z | pending-commit-hash | Added the manual arrange coordinator, Win32 positioning service, and arrange-path integration tests including real window movement. |
-| `T008` | Implement automatic VS Code window-open detection with debounce | `in_progress` | `T004`, `T007` | 2026-03-12T17:23:21Z |  |  | Trigger arrange from stable shell events. |
-| `T009` | Implement taskbar-order resolution for VS Code windows and fail-closed behavior when order is incomplete | `pending` | `T004` |  |  |  | Match on-screen order to taskbar order or abort. |
+| `T007` | Implement manual arrange execution that discovers windows and applies computed bounds | `done` | `T003`, `T004`, `T005` | 2026-03-12T17:20:07Z | 2026-03-12T17:23:21Z | `aef20f0a4a4d953848f540397497ebf2a781fa5a` | Added the manual arrange coordinator, Win32 positioning service, and arrange-path integration tests including real window movement. |
+| `T008` | Implement automatic VS Code window-open detection with debounce | `done` | `T004`, `T007` | 2026-03-12T17:23:21Z | 2026-03-12T17:27:10Z | pending-commit-hash | Added WinEvent-based automatic triggering, debounce scheduling, and tests that coalesced repeated eligible events. |
+| `T009` | Implement taskbar-order resolution for VS Code windows and fail-closed behavior when order is incomplete | `in_progress` | `T004` | 2026-03-12T17:27:10Z |  |  | Match on-screen order to taskbar order or abort. |
 | `T010` | Integrate taskbar ordering into arrange execution for both manual and automatic runs | `pending` | `T007`, `T008`, `T009` |  |  |  | Finalize correct ordering behavior. |
 | `T011` | Implement startup registration and durability behavior for per-user sign-in launch and restart-on-failure | `pending` | `T002`, `T005` |  |  |  | Support the tray toggle and durable startup. |
 | `T012` | Add packaging and local install flow for this machine | `pending` | `T010`, `T011` |  |  |  | Produce an installable/publishable build and install it locally. |
@@ -40,3 +40,4 @@ Last updated UTC: 2026-03-12T17:23:21Z
 - 2026-03-12T17:17:19Z: Completed T003 in commit `dab1e17f2c9afd04e0c688356d58f57cbb07dc4a`, completed T004 in commit `0f597b482bfad99456dca8aa4fe7fb41ca255f8d`, completed T005, and started T006.
 - 2026-03-12T17:20:07Z: Completed T005 in commit `29b7a1e9497d487bd1a9a39f5f7dda4f3f5dae34`, completed T006, and started T007.
 - 2026-03-12T17:23:21Z: Completed T006 in commit `2ea71f6ab6740d380df678b36068f37cbf150e5a`, completed T007, and started T008.
+- 2026-03-12T17:27:10Z: Completed T007 in commit `aef20f0a4a4d953848f540397497ebf2a781fa5a`, completed T008, and started T009.

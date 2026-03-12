@@ -2,6 +2,7 @@ using WindowResizer.App.Tray;
 using WindowResizer.App.Arrange;
 using WindowResizer.Core.Settings;
 using WindowResizer.App.Settings;
+using WindowResizer.Core.Windows;
 
 static class Program
 {
@@ -12,9 +13,15 @@ static class Program
 
         var settingsStore = new AppSettingsStore();
         var settings = settingsStore.Load();
+        var windowEnumerator = new TopLevelWindowEnumerator();
         var arrangeService = new ManualArrangeService(
             new EligibleVsCodeWindowSource(),
             new Win32WindowPositioningService());
+        using var autoArrangeController = new AutoArrangeController(
+            windowEnumerator,
+            arrangeService,
+            () => settings.WindowWidthPx);
+        autoArrangeController.Start();
 
         TrayApplicationContext? context = null;
 
