@@ -24,6 +24,7 @@ Windows tray application for arranging Visual Studio Code windows to a consisten
 ```powershell
 dotnet build WindowResizer.sln
 dotnet test WindowResizer.sln
+.\scripts\install-local.ps1
 ```
 
 ## Settings
@@ -32,3 +33,8 @@ dotnet test WindowResizer.sln
 - Current persisted values:
   - `windowWidthPx`
   - `runAtSignIn`
+
+## Local Install
+
+- Install script: `.\scripts\install-local.ps1`
+- Install location: `%LocalAppData%\WindowResizer\current`
