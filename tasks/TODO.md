@@ -69,7 +69,7 @@ Last updated: 2026-03-12
   - Depends on: `T007`, `T008`, `T009`
   - Deliverables: ordered arrange flow, notifications on order failure, regression tests
 
-- [ ] `T011` Implement startup registration and durability behavior for per-user sign-in launch and restart-on-failure.
+- [x] `T011` Implement startup registration and durability behavior for per-user sign-in launch and restart-on-failure.
   - Phase: `P5`
   - Depends on: `T002`, `T005`
   - Deliverables: scheduled task integration or documented fallback, toggle wiring, tests where practical

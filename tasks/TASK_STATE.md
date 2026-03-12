@@ -1,14 +1,14 @@
 # TASK STATE
 
-Last updated UTC: 2026-03-12T17:27:10Z
+Last updated UTC: 2026-03-12T17:33:39Z
 
 ## Overview
 
-- `overall_status`: `in_progress`
-- `current_task_id`: `T009`
-- `next_task_id`: `T009`
-- `completed_tasks`: `8`
-- `blocked_tasks`: `0`
+- `overall_status`: `blocked`
+- `current_task_id`: `none`
+- `next_task_id`: `none`
+- `completed_tasks`: `9`
+- `blocked_tasks`: `4`
 - `total_tasks`: `13`
 - `active_phases`: `P1`, `P2`, `P3`, `P4`, `P5`, `P6`
 - `gap_coverage_status`: `docs/spec/gaps.md` not present; no active gap IDs
@@ -24,12 +24,12 @@ Last updated UTC: 2026-03-12T17:27:10Z
 | `T005` | Implement the tray application shell with `Arrange Now`, `Settings...`, `Run at Sign-in`, and `Exit` | `done` | `T002` | 2026-03-12T17:14:53Z | 2026-03-12T17:17:19Z | `29b7a1e9497d487bd1a9a39f5f7dda4f3f5dae34` | Replaced the template form startup with a hidden tray app context, menu wiring, notification support, and tray integration tests. |
 | `T006` | Implement the Settings dialog for editing `windowWidthPx` | `done` | `T002`, `T005` | 2026-03-12T17:17:19Z | 2026-03-12T17:20:07Z | `2ea71f6ab6740d380df678b36068f37cbf150e5a` | Added the modal settings form, width editing UI, settings-save wiring in the app, and settings dialog integration tests. |
 | `T007` | Implement manual arrange execution that discovers windows and applies computed bounds | `done` | `T003`, `T004`, `T005` | 2026-03-12T17:20:07Z | 2026-03-12T17:23:21Z | `aef20f0a4a4d953848f540397497ebf2a781fa5a` | Added the manual arrange coordinator, Win32 positioning service, and arrange-path integration tests including real window movement. |
-| `T008` | Implement automatic VS Code window-open detection with debounce | `done` | `T004`, `T007` | 2026-03-12T17:23:21Z | 2026-03-12T17:27:10Z | pending-commit-hash | Added WinEvent-based automatic triggering, debounce scheduling, and tests that coalesced repeated eligible events. |
-| `T009` | Implement taskbar-order resolution for VS Code windows and fail-closed behavior when order is incomplete | `in_progress` | `T004` | 2026-03-12T17:27:10Z |  |  | Match on-screen order to taskbar order or abort. |
-| `T010` | Integrate taskbar ordering into arrange execution for both manual and automatic runs | `pending` | `T007`, `T008`, `T009` |  |  |  | Finalize correct ordering behavior. |
-| `T011` | Implement startup registration and durability behavior for per-user sign-in launch and restart-on-failure | `pending` | `T002`, `T005` |  |  |  | Support the tray toggle and durable startup. |
-| `T012` | Add packaging and local install flow for this machine | `pending` | `T010`, `T011` |  |  |  | Produce an installable/publishable build and install it locally. |
-| `T013` | Complete end-to-end validation, update docs, and verify the installed app works on this machine | `pending` | `T012` |  |  |  | Final verification pass before completion. |
+| `T008` | Implement automatic VS Code window-open detection with debounce | `done` | `T004`, `T007` | 2026-03-12T17:23:21Z | 2026-03-12T17:27:10Z | `af928f5c613986789c700a257ee8b9fb3f9f1792` | Added WinEvent-based automatic triggering, debounce scheduling, and tests that coalesced repeated eligible events. |
+| `T009` | Implement taskbar-order resolution for VS Code windows and fail-closed behavior when order is incomplete | `blocked` | `T004` | 2026-03-12T17:27:10Z |  |  | Blocked: Windows 11 taskbar UI Automation exposes the grouped VS Code taskbar button but not a stable per-window item list that can be mapped back to HWND order. A material path forward likely needs lower-level shell/preview host inspection beyond the current supported automation tree. |
+| `T010` | Integrate taskbar ordering into arrange execution for both manual and automatic runs | `blocked` | `T007`, `T008`, `T009` |  |  |  | Blocked: depends on T009, which cannot yet produce a stable taskbar-to-HWND order mapping for grouped VS Code windows. |
+| `T011` | Implement startup registration and durability behavior for per-user sign-in launch and restart-on-failure | `done` | `T002`, `T005` | 2026-03-12T17:27:10Z | 2026-03-12T17:33:39Z | pending-commit-hash | Added scheduled-task startup registration, restart-on-failure task XML generation, toggle coordination, and startup registration tests. |
+| `T012` | Add packaging and local install flow for this machine | `blocked` | `T010`, `T011` |  |  |  | Blocked: depends on T010, which is blocked by the unresolved taskbar-order requirement in T009. |
+| `T013` | Complete end-to-end validation, update docs, and verify the installed app works on this machine | `blocked` | `T012` |  |  |  | Blocked: depends on T012, which is blocked because T010 cannot proceed while T009 is unresolved. |
 
 ## Run Log
 
@@ -41,3 +41,5 @@ Last updated UTC: 2026-03-12T17:27:10Z
 - 2026-03-12T17:20:07Z: Completed T005 in commit `29b7a1e9497d487bd1a9a39f5f7dda4f3f5dae34`, completed T006, and started T007.
 - 2026-03-12T17:23:21Z: Completed T006 in commit `2ea71f6ab6740d380df678b36068f37cbf150e5a`, completed T007, and started T008.
 - 2026-03-12T17:27:10Z: Completed T007 in commit `aef20f0a4a4d953848f540397497ebf2a781fa5a`, completed T008, and started T009.
+- 2026-03-12T17:27:10Z: Marked T009 blocked after probing the live Windows 11 taskbar automation tree and failing to obtain a stable per-window VS Code order. Started T011 instead because its dependencies are done and it is unblocked.
+- 2026-03-12T17:33:39Z: Completed T011. Marked T010, T012, and T013 blocked because they depend on the unresolved T009 taskbar-order blocker.
