@@ -28,36 +28,36 @@ static class Program
             new Win32WindowVisibilityOrderSynchronizer(),
             arrangeOperationTracker);
         TrayApplicationContext? context = null;
-        using var autoArrangeController = new AutoArrangeController(
+        using var windowObservationController = new AutoArrangeController(
             windowEnumerator,
-            arrangeService,
             windowOrderResolver,
             arrangeOperationTracker,
-            () => settings.WindowWidthPx,
-            arrangeFailed: ex => context?.ShowNotification(
-                "Auto-arrange failed",
-                ex.Message,
-                ToolTipIcon.Error));
-        Exception? startupArrangeException = null;
+            startupWindowsProvider: windowEnumerator.EnumerateTrackableVsCodeWindows,
+            orderingUniverseProvider: windowEnumerator.EnumerateTrackableVsCodeWindows);
 
-        try
+        void RequestArrangeNow()
         {
-            _ = new StartupArrangeCoordinator(windowSource, arrangeService)
-                .ArrangeExistingWindowsIfNeeded(settings.WindowWidthPx);
-        }
-        catch (Exception ex)
-        {
-            startupArrangeException = ex;
+            try
+            {
+                _ = arrangeService.ArrangeNow(
+                    settings.WindowWidthPx,
+                    synchronizeTaskbarOrder: true,
+                    preferCurrentScreenOrder: true,
+                    normalizeZOrder: true);
+            }
+            catch (Exception ex)
+            {
+                context?.ShowNotification(
+                    "Arrange failed",
+                    ex.Message,
+                    ToolTipIcon.Error);
+            }
         }
 
         context = new TrayApplicationContext(new TrayApplicationContextOptions
         {
             RunAtSignIn = settings.RunAtSignIn,
-            ArrangeNowRequested = () => arrangeService.ArrangeNow(
-                settings.WindowWidthPx,
-                synchronizeTaskbarOrder: true,
-                preferCurrentScreenOrder: true,
-                normalizeZOrder: true),
+            ArrangeNowRequested = RequestArrangeNow,
             SettingsRequested = () =>
             {
                 using var settingsForm = new SettingsForm(settings);
@@ -82,14 +82,7 @@ static class Program
             }
         });
 
-        if (startupArrangeException is not null)
-        {
-            context.ShowNotification(
-                "Startup arrange failed",
-                startupArrangeException.Message);
-        }
-
-        autoArrangeController.Start();
+        windowObservationController.Start();
         Application.Run(context);
     }    
 }

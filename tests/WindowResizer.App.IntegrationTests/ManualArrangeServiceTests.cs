@@ -119,7 +119,7 @@ public class ManualArrangeServiceTests
     }
 
     [Fact]
-    public void ArrangeNowCanSkipTaskbarSynchronizationForAutomaticRuns()
+    public void ArrangeNowCanSkipTaskbarSynchronizationWhenRequested()
     {
         var positioningService = new FakeWindowPositioningService(new MonitorWorkArea(0, 0, 2000, 1000));
         var visibilitySynchronizer = new FakeWindowVisibilityOrderSynchronizer();

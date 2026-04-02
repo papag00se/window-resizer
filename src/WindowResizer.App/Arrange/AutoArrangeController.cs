@@ -11,14 +11,10 @@ public sealed class AutoArrangeController : IDisposable
     private const uint WineventSkipOwnProcess = 0x0002;
 
     private readonly TopLevelWindowEnumerator _windowEnumerator;
-    private readonly Func<int> _widthProvider;
-    private readonly ManualArrangeService _manualArrangeService;
     private readonly HeuristicWindowOrderResolver _windowOrderResolver;
     private readonly ArrangeOperationTracker _arrangeOperationTracker;
-    private readonly DebouncedActionScheduler _scheduler;
     private readonly Func<IReadOnlyList<TopLevelWindowInfo>> _startupWindowsProvider;
     private readonly Func<IReadOnlyList<TopLevelWindowInfo>> _orderingUniverseProvider;
-    private readonly Action<Exception>? _arrangeFailed;
     private readonly WinEventDelegate _eventCallback;
     private readonly object _knownHandlesLock = new();
     private HashSet<nint> _knownTrackedHandles = [];
@@ -26,26 +22,16 @@ public sealed class AutoArrangeController : IDisposable
 
     public AutoArrangeController(
         TopLevelWindowEnumerator windowEnumerator,
-        ManualArrangeService manualArrangeService,
         HeuristicWindowOrderResolver windowOrderResolver,
         ArrangeOperationTracker arrangeOperationTracker,
-        Func<int> widthProvider,
-        TimeSpan? debounceDelay = null,
         Func<IReadOnlyList<TopLevelWindowInfo>>? startupWindowsProvider = null,
-        Func<IReadOnlyList<TopLevelWindowInfo>>? orderingUniverseProvider = null,
-        Action<Exception>? arrangeFailed = null)
+        Func<IReadOnlyList<TopLevelWindowInfo>>? orderingUniverseProvider = null)
     {
         _windowEnumerator = windowEnumerator;
-        _manualArrangeService = manualArrangeService;
         _windowOrderResolver = windowOrderResolver;
         _arrangeOperationTracker = arrangeOperationTracker;
-        _widthProvider = widthProvider;
         _startupWindowsProvider = startupWindowsProvider ?? _windowEnumerator.EnumerateTrackableVsCodeWindows;
         _orderingUniverseProvider = orderingUniverseProvider ?? _windowEnumerator.EnumerateTrackableVsCodeWindows;
-        _arrangeFailed = arrangeFailed;
-        _scheduler = new DebouncedActionScheduler(
-            debounceDelay ?? TimeSpan.FromMilliseconds(250),
-            RunAutomaticArrange);
         _eventCallback = HandleWinEvent;
     }
 
@@ -86,13 +72,7 @@ public sealed class AutoArrangeController : IDisposable
             return false;
         }
 
-        if (!_windowOrderResolver.ObserveWindow(window))
-        {
-            return false;
-        }
-
-        _scheduler.Request();
-        return true;
+        return _windowOrderResolver.ObserveWindow(window);
     }
 
     public void Dispose()
@@ -102,8 +82,6 @@ public sealed class AutoArrangeController : IDisposable
             UnhookWinEvent(_showHook);
             _showHook = nint.Zero;
         }
-
-        _scheduler.Dispose();
     }
 
     private void HandleWinEvent(
@@ -147,23 +125,6 @@ public sealed class AutoArrangeController : IDisposable
             var discoveredNewHandle = nextKnownHandles.Except(_knownTrackedHandles).Any();
             _knownTrackedHandles = nextKnownHandles;
             return discoveredNewHandle;
-        }
-    }
-
-    private void RunAutomaticArrange()
-    {
-        try
-        {
-            _manualArrangeService.ArrangeNow(
-                _widthProvider(),
-                synchronizeTaskbarOrder: false,
-                preferCurrentScreenOrder: false,
-                normalizeZOrder: false,
-                orderingUniverse: _orderingUniverseProvider());
-        }
-        catch (Exception ex)
-        {
-            _arrangeFailed?.Invoke(ex);
         }
     }
 

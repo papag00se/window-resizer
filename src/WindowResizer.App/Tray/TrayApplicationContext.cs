@@ -10,10 +10,12 @@ public sealed class TrayApplicationContext : ApplicationContext
     private readonly ToolStripMenuItem _runAtSignInMenuItem;
     private readonly ToolStripMenuItem _exitMenuItem;
     private readonly Icon _trayIconAsset;
+    private readonly Action? _arrangeNowRequested;
 
     public TrayApplicationContext(TrayApplicationContextOptions options)
     {
         ArgumentNullException.ThrowIfNull(options);
+        _arrangeNowRequested = options.ArrangeNowRequested;
 
         _arrangeNowMenuItem = new ToolStripMenuItem("Arrange Now");
         _settingsMenuItem = new ToolStripMenuItem("Settings...");
@@ -24,7 +26,7 @@ public sealed class TrayApplicationContext : ApplicationContext
         };
         _exitMenuItem = new ToolStripMenuItem("Exit");
 
-        _arrangeNowMenuItem.Click += (_, _) => options.ArrangeNowRequested?.Invoke();
+        _arrangeNowMenuItem.Click += (_, _) => RequestArrangeNow();
         _settingsMenuItem.Click += (_, _) => options.SettingsRequested?.Invoke();
         _runAtSignInMenuItem.Click += (_, _) => options.RunAtSignInChanged?.Invoke(_runAtSignInMenuItem.Checked);
         _exitMenuItem.Click += (_, _) => ExitThread();
@@ -48,7 +50,7 @@ public sealed class TrayApplicationContext : ApplicationContext
             Visible = true
         };
 
-        TrayIcon.DoubleClick += (_, _) => options.ArrangeNowRequested?.Invoke();
+        TrayIcon.MouseClick += (_, e) => HandleTrayIconMouseClick(e);
     }
 
     public ContextMenuStrip Menu { get; }
@@ -62,6 +64,14 @@ public sealed class TrayApplicationContext : ApplicationContext
     public ToolStripMenuItem RunAtSignInMenuItem => _runAtSignInMenuItem;
 
     public ToolStripMenuItem ExitMenuItem => _exitMenuItem;
+
+    internal void HandleTrayIconMouseClick(MouseEventArgs e)
+    {
+        if (e.Button == MouseButtons.Left)
+        {
+            RequestArrangeNow();
+        }
+    }
 
     public void ShowNotification(string title, string message, ToolTipIcon icon = ToolTipIcon.Info)
     {
@@ -78,5 +88,10 @@ public sealed class TrayApplicationContext : ApplicationContext
         _trayIconAsset.Dispose();
         Menu.Dispose();
         base.ExitThreadCore();
+    }
+
+    private void RequestArrangeNow()
+    {
+        _arrangeNowRequested?.Invoke();
     }
 }

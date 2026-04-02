@@ -1,10 +1,10 @@
 # Window Resizer Technical Spec
 
-Last updated: 2026-03-12
+Last updated: 2026-04-02
 
 ## Overview
 
-This app is a hidden Windows desktop process with a tray icon, a shell-event listener, a VS Code window enumerator, and a layout engine. It runs in the interactive user session and applies the same layout automatically or on demand using a saved width setting, seeded to `1823` physical pixels.
+This app is a hidden Windows desktop process with a tray icon, a shell-event observer for session ordering, a VS Code window enumerator, and a layout engine. It runs in the interactive user session and applies the same layout on demand using a saved width setting, seeded to `1823` physical pixels.
 
 The simplest fit is a .NET 8 Windows Forms app:
 
@@ -41,7 +41,7 @@ Responsibilities:
 - load settings
 - create the hidden application context
 - initialize tray icon and menu
-- register shell/window event hooks
+- register shell/window event hooks for ordering observation
 - recreate the tray icon after Explorer restarts
 
 Suggested types:
@@ -49,7 +49,7 @@ Suggested types:
 - `Program`
 - `TrayApplicationContext`
 - `SingleInstanceGuard`
-- `StartupArrangeCoordinator`
+- `AutoArrangeController`
 
 ### 2. Settings Layer
 
@@ -79,8 +79,7 @@ Notes:
 Responsibilities:
 
 - listen for relevant shell accessibility events
-- debounce duplicate events
-- queue a single arrange request
+- record first-seen ordering for eligible VS Code windows
 
 Primary approach:
 
@@ -92,10 +91,9 @@ Primary approach:
 Implementation notes:
 
 - Filter aggressively to top-level windows from `Code.exe` and `Code - Insiders.exe`.
-- Keep a short debounce window, such as 150-300 ms, keyed by HWND.
 - Ignore events from child objects and non-window object IDs.
-- Automatic runs from this path must call the arrange service with taskbar synchronization disabled.
-- Do not treat foreground activation as a creation/open signal; taskbar clicks and normal focus changes must not schedule rearrangement.
+- Do not queue arrange work from this path.
+- Do not treat foreground activation as a creation/open signal; taskbar clicks and normal focus changes must not change the recorded order.
 
 Rejected approach:
 
@@ -157,33 +155,27 @@ Implementation rule:
 Taskbar-group synchronization rule:
 
 - Add a visibility-order synchronizer that hides windows in resolved order and shows them again in that same order without activation.
-- Use this synchronizer only for:
-  - startup recovery when the app launches and more than one eligible VS Code window already exists
-  - explicit `Arrange Now`
-- Do not use hide/show synchronization for automatic new-window arrange runs.
+- Use this synchronizer only for explicit `Arrange Now`.
 
 Rationale:
 
 - Live validation on this machine showed that Explorer's grouped VS Code preview order followed the hide/show sequence.
-- Restricting the behavior to startup recovery and manual arrange avoids needless flicker during routine auto-arrange events.
+- Restricting the behavior to manual arrange avoids needless flicker during routine shell-event observation.
 
 Manual arrange ordering override:
 
 - Manual `Arrange Now` should prefer the current on-screen left-to-right order of eligible windows.
-- Startup recovery with multiple pre-existing windows should use that same current on-screen left-to-right order.
 - Use current window bounds from discovery and sort manual runs by:
   - current left edge
   - current top edge
   - heuristic order index as the final tie-breaker
-- Automatic new-window runs should continue using the heuristic order directly.
 
 Z-order normalization rule:
 
-- Manual `Arrange Now` and startup recovery with multiple pre-existing windows must normalize Z order after the final rectangles are applied.
+- Manual `Arrange Now` must normalize Z order after the final rectangles are applied.
 - The desired stack is:
   - left-most window top-most
   - then each subsequent window directly beneath it from left to right
-- Automatic new-window runs must not change Z order.
 
 ### 6. Layout Layer
 
@@ -194,7 +186,6 @@ Responsibilities:
 
 Target monitor selection:
 
-- Automatic trigger: monitor of the window that caused the arrange run
 - Manual trigger: monitor of the foreground VS Code window, otherwise monitor of the last active eligible VS Code window
 
 Working area:
@@ -231,24 +222,19 @@ Y[i] = T
 Rect[i] = (X[i], Y[i], W, H)
 ```
 
-Automatic-run slot preservation:
-
-- When an automatic run is triggered by a newly shown eligible VS Code window, compute the left-to-right slot index from the full tracked VS Code order, including minimized but still trackable top-level VS Code windows.
-- Apply rectangles only to currently eligible windows, but use the slot index from that larger tracked order so a newly opened visible window can land to the right of older minimized windows.
-
 Application:
 
 - Use `SetWindowPos` without changing z-order.
-- When taskbar synchronization is enabled for the trigger, perform hide/show ordering first.
+- When taskbar synchronization is enabled, perform hide/show ordering first.
 - Apply final bounds in heuristic window order from left to right.
-- When the trigger is manual arrange or startup recovery with multiple pre-existing windows, apply a follow-up Z-order normalization pass after the rectangles are set.
+- After manual arrange applies the final bounds, apply a follow-up Z-order normalization pass.
 - Suppress redraw churn where practical, but do not introduce a second animation system.
 
 ### 7. Tray UX Layer
 
 Tray interactions:
 
-- Double-click or primary click: `Arrange Now`
+- Primary click: `Arrange Now`
 - Context menu minimum:
   - `Arrange Now`
   - `Settings...`
@@ -258,7 +244,7 @@ Tray interactions:
 Notifications:
 
 - Use balloon tips or modern toast notifications only for short operational status.
-- Do not spam on successful auto-arrange runs.
+- Do not spam on successful arrange runs.
 
 Settings window:
 
@@ -291,11 +277,10 @@ Required task settings:
 - allow start on demand
 - restart on failure enabled
 
-Startup recovery behavior:
+Startup behavior:
 
-- After loading settings and creating services, enumerate eligible VS Code windows once.
-- If more than one eligible window already exists, run a single startup recovery arrange with taskbar synchronization enabled.
-- If zero or one eligible window exists, skip startup recovery.
+- After loading settings and creating services, enumerate eligible VS Code windows once to seed ordering state.
+- Do not run an automatic startup arrange.
 
 Fallback:
 
@@ -305,7 +290,7 @@ Fallback:
 
 Each arrange run should log:
 
-- trigger type: auto or manual
+- trigger type: manual
 - trigger HWND
 - target monitor
 - discovered eligible HWNDs
@@ -326,7 +311,7 @@ Fail closed when the app cannot trust its inputs:
 - No eligible windows: no-op and log.
 - Invalid `windowWidthPx` in persisted settings: show an error, do not arrange, and require correction through Settings or the settings file.
 - Invalid monitor info: abort and notify.
-- Explorer restart: rebuild tray icon and continue listening.
+- Explorer restart: rebuild tray icon and continue ordering observation.
 
 This is intentional. The app should not silently substitute a different ordering rule because that would violate the core requirement.
 
@@ -367,9 +352,9 @@ This is intentional. The app should not silently substitute a different ordering
 
 - Start app at sign-in and verify tray icon presence.
 - Open `Settings...`, change `Window width (px)`, save, and verify the next arrange run uses the new width.
-- Open additional VS Code windows and verify auto-arrange.
+- Left-click the tray icon and verify it behaves the same as `Arrange Now`.
+- Open additional VS Code windows and verify no automatic arrange run occurs.
 - Open VS Code windows in a known sequence and verify the next arrange run matches that observed-open sequence.
-- Launch the app while multiple VS Code windows already exist and verify the startup recovery pass also aligns the grouped preview order.
 - Click `Arrange Now` and verify the grouped preview order follows the resolved left-to-right sequence.
 - Restart Explorer and verify the tray icon returns and arrange still works.
 
@@ -379,7 +364,7 @@ This is intentional. The app should not silently substitute a different ordering
 2. Implement VS Code window discovery and manual `Arrange Now`.
 3. Add the Settings dialog and persist `windowWidthPx`, seeded to `1823`.
 4. Implement width clamp behavior.
-5. Implement automatic arrange trigger with debounce.
-6. Implement heuristic ordering from observed open events with deterministic fallback.
+5. Implement shell-event ordering observation with deterministic fallback.
+6. Implement manual `Arrange Now` tray interaction and layout application.
 7. Add startup registration and restart-on-failure support.
 8. Add tests for layout, eligibility, and settings persistence.

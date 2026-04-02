@@ -6,8 +6,8 @@ Windows tray application for arranging Visual Studio Code windows to a consisten
 
 - Primary order: first-seen VS Code window-open sequence observed by the app during the current session
 - Fallback order for pre-existing windows: process start time, then PID, then window handle
-- Manual `Arrange Now` override: current on-screen left-edge order, so you can reorder windows first and then reapply the layout
-- Taskbar preview synchronization: hide/show ordering is applied only on startup recovery with multiple pre-existing windows and on `Arrange Now`
+- Manual `Arrange Now` override, including the tray icon primary click: current on-screen left-edge order, so you can reorder windows first and then reapply the layout
+- Taskbar preview synchronization: hide/show ordering is applied on `Arrange Now`
 
 ## Solution Layout
 

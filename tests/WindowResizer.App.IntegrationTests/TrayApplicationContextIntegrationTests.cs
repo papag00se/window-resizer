@@ -44,6 +44,24 @@ public class TrayApplicationContextIntegrationTests
         Assert.True(toggledValue);
     }
 
+    [Fact]
+    public void TrayApplicationContextRoutesPrimaryLeftClickToArrangeNow()
+    {
+        var arrangeRequested = 0;
+
+        RunInStaThread(() =>
+        {
+            using var context = CreateContext(
+                runAtSignIn: false,
+                arrangeNowRequested: () => arrangeRequested++);
+
+            context.HandleTrayIconMouseClick(new MouseEventArgs(MouseButtons.Left, 1, 0, 0, 0));
+            context.HandleTrayIconMouseClick(new MouseEventArgs(MouseButtons.Right, 1, 0, 0, 0));
+        });
+
+        Assert.Equal(1, arrangeRequested);
+    }
+
     private static TrayApplicationContext CreateContext(
         bool runAtSignIn,
         Action? arrangeNowRequested = null,
